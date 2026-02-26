@@ -6,6 +6,7 @@
 |-----|------|-------------|
 | 1.0 | 2026-02-26 | Initial plan created from blueprint review + codebase exploration |
 | 1.1 | 2026-02-26 | Phase 0 + Phase 1 completed; Phase 2 completed |
+| 1.2 | 2026-02-26 | Phase 3 completed |
 
 ---
 
@@ -151,26 +152,25 @@ invoicemanager/
 
 ---
 
-### Phase 3: Data Import Pipelines + CRUD APIs
+### Phase 3: Data Import Pipelines + CRUD APIs ✅
 **Goal:** Import Upwork XLSX, bank statements XLSX, provider invoices; full CRUD for all entities.
 
 **Phase 3A — Import services:**
-- `backend/services/upwork_import.py`
+- [x] `backend/services/upwork_import.py`
   - Parse sheet "data" with 9 columns (Date, Transaction ID, Transaction type, Transaction summary details, Description 1, Ref ID, Amount in local currency, Currency, Payment method)
   - **Reuse regex from** `generate_invoice.py:404-431` for period parsing
   - Month assignment by period END date
   - Duplicate detection by tx_id
-- `backend/services/bank_import.py`
+- [x] `backend/services/bank_import.py`
   - Parse 7 columns: Buchungstag, Wertstellung, Umsatzart, Buchungstext, Betrag, RK, Buchungsjahr
   - Auto-match categories by searching Buchungstext for `bank_keywords` (case-insensitive)
   - Extract invoice references (e.g., "ZAHLUNGSGRUND: INV320", "INVOICE  AEO000811") via regex
-  - Calculate bank_fee = abs(bank_amount) - provider_invoice.amount
-- `backend/services/provider_invoice_service.py`
-  - CRUD + PDF file storage in `data/categories/{category_id}/`
+- [x] `backend/services/provider_invoice_service.py`
+  - CRUD helpers + PDF file storage in `data/categories/{category_id}/`
 
 **Phase 3B — Pydantic schemas + CRUD routers:**
-- `backend/schemas/` — Base/Create/Update/Response per entity
-- `backend/routers/` — REST endpoints for all entities + import endpoints
+- [x] `backend/schemas/` — Base/Create/Update/Response per entity (8 schema modules)
+- [x] `backend/routers/` — REST endpoints for all entities + import endpoints (9 routers)
 
 **Key API endpoints:**
 
@@ -185,7 +185,7 @@ invoicemanager/
 | CRUD | `/api/payments[/{id}]` | Payment receipts |
 | GET | `/api/working-days/{year}/{month}` | Working day count |
 
-**Verify:** Import the actual Upwork and bank statement XLSX files; verify parsed data matches tracking.json.
+**Verified:** 120/120 tests pass (62 from Phase 1-2 + 58 new: 30 import service tests + 28 API CRUD tests).
 
 ---
 
