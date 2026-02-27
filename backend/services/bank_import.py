@@ -8,9 +8,12 @@ bank_keywords (case-insensitive). Extracts invoice references via regex
 (e.g., "ZAHLUNGSGRUND: INV320", "INVOICE  AEO000811").
 """
 
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
+
+logger = logging.getLogger(__name__)
 
 from openpyxl import load_workbook
 from sqlalchemy.orm import Session
@@ -228,4 +231,8 @@ def import_bank_transactions(
         db.commit()
 
     result.imported = len(imported)
+    logger.info(
+        "Bank import: %d imported, %d duplicates skipped, %d auto-matched",
+        result.imported, result.skipped_duplicate, result.auto_matched,
+    )
     return result

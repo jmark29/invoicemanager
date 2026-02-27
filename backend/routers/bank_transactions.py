@@ -16,6 +16,7 @@ from backend.schemas.bank_transaction import (
     BankTransactionUpdate,
 )
 from backend.services.bank_import import import_bank_transactions
+from backend.services.file_validation import validate_xlsx
 
 router = APIRouter(prefix="/api/bank-transactions", tags=["bank-transactions"])
 
@@ -24,6 +25,8 @@ router = APIRouter(prefix="/api/bank-transactions", tags=["bank-transactions"])
 def list_bank_transactions(
     category_id: str | None = None,
     provider_invoice_id: int | None = None,
+    skip: int = 0,
+    limit: int = 500,
     db: Session = Depends(get_db),
 ):
     query = db.query(BankTransaction)
@@ -31,7 +34,7 @@ def list_bank_transactions(
         query = query.filter(BankTransaction.category_id == category_id)
     if provider_invoice_id:
         query = query.filter(BankTransaction.provider_invoice_id == provider_invoice_id)
-    return query.order_by(BankTransaction.booking_date.desc()).all()
+    return query.order_by(BankTransaction.booking_date.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{tx_id}", response_model=BankTransactionResponse)
@@ -70,6 +73,8 @@ def update_bank_transaction(
 @router.post("/import", response_model=BankImportResponse)
 def import_bank_xlsx(file: UploadFile, db: Session = Depends(get_db)):
     """Import bank transactions from an XLSX file."""
+    validate_xlsx(file)
+
     # Save uploaded file
     imports_dir = settings.IMPORTS_DIR
     imports_dir.mkdir(parents=True, exist_ok=True)

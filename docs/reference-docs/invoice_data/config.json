@@ -1,0 +1,77 @@
+{
+  "sender": {
+    "city": "Wiesbaden"
+  },
+  "clients": {
+    "drs": {
+      "id": "02",
+      "name": "DRS Holding AG",
+      "address_line1": "Am Sandtorkai 58",
+      "address_line2": "",
+      "zip_city": "20457 Hamburg"
+    }
+  },
+  "invoice_numbering": {
+    "prefix": "AR",
+    "format": "{prefix}{year}{month:02d}-{client_id}",
+    "example": "AR202506-02"
+  },
+  "vat_rate": 0.19,
+  "template_file": "AR202506-02.docx",
+  "line_items": {
+    "drs": [
+      {
+        "pos": 1,
+        "label": "Team- & Projektmanagement und Konzeption",
+        "type": "fixed",
+        "amount": 16450.00
+      },
+      {
+        "pos": 2,
+        "label": "Senior FileMaker Entwickler",
+        "type": "fixed",
+        "amount": 8300.00
+      },
+      {
+        "pos": 3,
+        "label": "Junior FileMaker Entwickler",
+        "type": "external_invoice",
+        "source": "junior_fm",
+        "notes": "Monatliche Rechnung vom externen Entwickler"
+      },
+      {
+        "pos": 4,
+        "label": "Serveradministration und AWS-Services",
+        "type": "distributed_invoice",
+        "source": "cloud_engineer",
+        "notes": "Quartalsrechnung, Verteilung nach Arbeitstagen. Fester Stundensatz, feste Stunden/Tag, abzgl. Feiertage."
+      },
+      {
+        "pos": 5,
+        "label": "Mobile Softwareentwickler",
+        "type": "upwork",
+        "source": "upwork_mobile_dev",
+        "notes": "Upwork-Transaktionen, ein Contract/Freelancer"
+      },
+      {
+        "pos": 6,
+        "label": "2. Mobile Softwareentwickler, QA- und Business Analyst Services",
+        "type": "external_invoice",
+        "source": "mobile_qa",
+        "notes": "Externe Rechnung, ggf. in USD mit FX-Umrechnung + Bankgebuehren"
+      }
+    ],
+    "drs_optional": [
+      {
+        "label": "Reisekosten",
+        "type": "manual",
+        "notes": "Wird nur bei Bedarf hinzugefuegt"
+      }
+    ]
+  },
+  "working_days": {
+    "country": "DE",
+    "state": "HE",
+    "notes": "Hessen Feiertage fuer Arbeitstage-Berechnung"
+  }
+}

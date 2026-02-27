@@ -15,11 +15,16 @@ router = APIRouter(prefix="/api/cost-categories", tags=["cost-categories"])
 
 
 @router.get("", response_model=list[CostCategoryResponse])
-def list_cost_categories(active_only: bool = False, db: Session = Depends(get_db)):
+def list_cost_categories(
+    active_only: bool = False,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
     query = db.query(CostCategory)
     if active_only:
         query = query.filter(CostCategory.active.is_(True))
-    return query.order_by(CostCategory.sort_order, CostCategory.name).all()
+    return query.order_by(CostCategory.sort_order, CostCategory.name).offset(skip).limit(limit).all()
 
 
 @router.get("/{category_id}", response_model=CostCategoryResponse)

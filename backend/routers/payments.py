@@ -18,6 +18,8 @@ router = APIRouter(prefix="/api/payments", tags=["payments"])
 def list_payments(
     client_id: str | None = None,
     matched_invoice_id: int | None = None,
+    skip: int = 0,
+    limit: int = 500,
     db: Session = Depends(get_db),
 ):
     query = db.query(PaymentReceipt)
@@ -25,7 +27,7 @@ def list_payments(
         query = query.filter(PaymentReceipt.client_id == client_id)
     if matched_invoice_id:
         query = query.filter(PaymentReceipt.matched_invoice_id == matched_invoice_id)
-    return query.order_by(PaymentReceipt.payment_date.desc()).all()
+    return query.order_by(PaymentReceipt.payment_date.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{payment_id}", response_model=PaymentReceiptResponse)

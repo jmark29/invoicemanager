@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DATA_DIR: Path = Path("./data")
+    LOG_LEVEL: str = "INFO"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

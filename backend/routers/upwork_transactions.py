@@ -13,6 +13,7 @@ from backend.schemas.upwork_transaction import (
     UpworkTransactionResponse,
     UpworkTransactionUpdate,
 )
+from backend.services.file_validation import validate_xlsx
 from backend.services.upwork_import import import_upwork_transactions
 
 router = APIRouter(prefix="/api/upwork-transactions", tags=["upwork-transactions"])
@@ -22,6 +23,8 @@ router = APIRouter(prefix="/api/upwork-transactions", tags=["upwork-transactions
 def list_upwork_transactions(
     assigned_month: str | None = None,
     category_id: str | None = None,
+    skip: int = 0,
+    limit: int = 500,
     db: Session = Depends(get_db),
 ):
     query = db.query(UpworkTransaction)
@@ -29,7 +32,7 @@ def list_upwork_transactions(
         query = query.filter(UpworkTransaction.assigned_month == assigned_month)
     if category_id:
         query = query.filter(UpworkTransaction.category_id == category_id)
-    return query.order_by(UpworkTransaction.tx_date.desc()).all()
+    return query.order_by(UpworkTransaction.tx_date.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{tx_id}", response_model=UpworkTransactionResponse)
@@ -61,6 +64,8 @@ def import_upwork_xlsx(
     db: Session = Depends(get_db),
 ):
     """Import Upwork transactions from an XLSX file."""
+    validate_xlsx(file)
+
     imports_dir = settings.IMPORTS_DIR
     imports_dir.mkdir(parents=True, exist_ok=True)
     tmp_path = imports_dir / (file.filename or "upwork_import.xlsx")

@@ -351,7 +351,7 @@ def resolve_line_items(
         all_warnings.extend(item.warnings)
 
     # Calculate totals using Decimal
-    net = sum(Decimal(str(item.amount)) for item in items)
+    net = sum((Decimal(str(item.amount)) for item in items), Decimal("0"))
     net_rounded = net.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     vat = (net_rounded * Decimal("0.19")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     gross = net_rounded + vat

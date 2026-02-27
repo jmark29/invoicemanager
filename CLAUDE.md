@@ -28,6 +28,11 @@ cd frontend && npm run dev
 # Tests
 uv run pytest
 
+# Database migrations
+uv run alembic upgrade head           # Apply all pending migrations
+uv run alembic revision --autogenerate -m "description"  # Create new migration after model changes
+uv run alembic stamp head             # Stamp existing DB (first time only)
+
 # Seed data
 uv run python -m backend.seed.loader
 

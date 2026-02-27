@@ -12,10 +12,23 @@ from backend.schemas.cost_category import (
     CostCategoryResponse,
     CostCategoryUpdate,
 )
+from backend.schemas.dashboard import (
+    InvoicePaymentStatusResponse,
+    MonthlyDashboardResponse,
+    OpenInvoicesResponse,
+    ProviderInvoiceMatchResponse,
+    ReconciliationResponse,
+    UnmatchedBankTransactionResponse,
+)
 from backend.schemas.generated_invoice import (
     GeneratedInvoiceListResponse,
     GeneratedInvoiceResponse,
+    InvoiceGenerateRequest,
+    InvoicePreviewRequest,
+    InvoicePreviewResponse,
+    InvoiceRegenerateRequest,
     InvoiceStatusUpdate,
+    ResolvedLineItemResponse,
 )
 from backend.schemas.line_item_definition import (
     LineItemDefinitionCreate,
@@ -53,7 +66,18 @@ __all__ = [
     "CostCategoryUpdate",
     "GeneratedInvoiceListResponse",
     "GeneratedInvoiceResponse",
+    "InvoiceGenerateRequest",
+    "InvoicePaymentStatusResponse",
+    "InvoicePreviewRequest",
+    "InvoicePreviewResponse",
+    "InvoiceRegenerateRequest",
     "InvoiceStatusUpdate",
+    "MonthlyDashboardResponse",
+    "OpenInvoicesResponse",
+    "ProviderInvoiceMatchResponse",
+    "ReconciliationResponse",
+    "ResolvedLineItemResponse",
+    "UnmatchedBankTransactionResponse",
     "LineItemDefinitionCreate",
     "LineItemDefinitionResponse",
     "LineItemDefinitionUpdate",

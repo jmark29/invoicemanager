@@ -11,11 +11,16 @@ router = APIRouter(prefix="/api/clients", tags=["clients"])
 
 
 @router.get("", response_model=list[ClientResponse])
-def list_clients(active_only: bool = False, db: Session = Depends(get_db)):
+def list_clients(
+    active_only: bool = False,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
     query = db.query(Client)
     if active_only:
         query = query.filter(Client.active.is_(True))
-    return query.order_by(Client.name).all()
+    return query.order_by(Client.name).offset(skip).limit(limit).all()
 
 
 @router.get("/{client_id}", response_model=ClientResponse)

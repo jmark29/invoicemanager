@@ -1,0 +1,165 @@
+/* Invoice PDF stylesheet — A4, matches reference AR202506-02.docx layout */
+
+@page {
+    size: A4;
+    margin: 25mm 25mm 30mm 25mm;
+
+    @bottom-left {
+        content: element(footer);
+        vertical-align: top;
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: #333;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+
+.sender-line {
+    font-size: 7.5pt;
+    color: #666;
+    border-bottom: 0.5pt solid #999;
+    padding-bottom: 2pt;
+    margin-bottom: 12pt;
+}
+
+.client-address {
+    margin-bottom: 30pt;
+    line-height: 1.5;
+}
+
+.client-address .name {
+    font-weight: 400;
+}
+
+.meta {
+    margin-bottom: 20pt;
+}
+
+.meta .location-date {
+    text-align: right;
+    margin-bottom: 12pt;
+}
+
+.meta .invoice-number {
+    font-size: 13pt;
+    font-weight: 400;
+    margin-bottom: 4pt;
+}
+
+.meta .period {
+    font-size: 10pt;
+    color: #555;
+}
+
+/* ── Line Items Table ───────────────────────────────── */
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16pt;
+    margin-bottom: 6pt;
+}
+
+.invoice-table th {
+    font-weight: 400;
+    font-size: 9pt;
+    color: #555;
+    text-align: left;
+    padding: 4pt 6pt;
+    border-bottom: 1pt solid #333;
+}
+
+.invoice-table th.amount-col {
+    text-align: right;
+}
+
+.invoice-table td {
+    padding: 6pt 6pt;
+    vertical-align: top;
+}
+
+.invoice-table .pos-col {
+    width: 30pt;
+    text-align: center;
+}
+
+.invoice-table .amount-col {
+    width: 100pt;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.invoice-table .label-col {
+    /* takes remaining space */
+}
+
+.invoice-table tbody tr {
+    border-bottom: 0.5pt solid #ddd;
+}
+
+/* ── Summary Rows ───────────────────────────────────── */
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12pt;
+}
+
+.summary-table td {
+    padding: 4pt 6pt;
+}
+
+.summary-table .label {
+    text-align: right;
+    padding-right: 12pt;
+}
+
+.summary-table .amount {
+    width: 100pt;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.summary-table .net-row td {
+    padding-top: 10pt;
+    border-top: 1pt solid #333;
+}
+
+.summary-table .gross-row td {
+    font-weight: 400;
+    border-top: 1pt solid #333;
+    padding-top: 6pt;
+}
+
+/* ── Footer ─────────────────────────────────────────── */
+
+.footer {
+    position: running(footer);
+    font-size: 7pt;
+    color: #666;
+    line-height: 1.5;
+    border-top: 0.5pt solid #999;
+    padding-top: 4pt;
+}
+
+.footer-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.footer-table td {
+    vertical-align: top;
+    padding: 1pt 0;
+}

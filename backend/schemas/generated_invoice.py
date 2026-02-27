@@ -64,3 +64,51 @@ class GeneratedInvoiceListResponse(BaseModel):
 class InvoiceStatusUpdate(BaseModel):
     status: str  # draft, sent, paid, overdue
     sent_date: date | None = None
+
+
+# ── Preview & Generation schemas ──────────────────────────────────
+
+
+class InvoicePreviewRequest(BaseModel):
+    client_id: str
+    year: int
+    month: int
+
+
+class ResolvedLineItemResponse(BaseModel):
+    position: int
+    label: str
+    amount: float
+    source_type: str
+    category_id: str | None = None
+    provider_invoice_id: int | None = None
+    distribution_source_id: int | None = None
+    distribution_months: list[str] | None = None
+    upwork_tx_ids: list[str] | None = None
+    warnings: list[str] = []
+
+
+class InvoicePreviewResponse(BaseModel):
+    client_id: str
+    year: int
+    month: int
+    items: list[ResolvedLineItemResponse]
+    net_total: float
+    vat_amount: float
+    gross_total: float
+    warnings: list[str] = []
+
+
+class InvoiceGenerateRequest(BaseModel):
+    client_id: str
+    year: int
+    month: int
+    invoice_number: str
+    invoice_date: date
+    overrides: dict[int, float] | None = None
+    notes: str | None = None
+
+
+class InvoiceRegenerateRequest(BaseModel):
+    overrides: dict[int, float] | None = None
+    notes: str | None = None

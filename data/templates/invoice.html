@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="invoice.css">
+</head>
+<body>
+
+<!-- Footer (placed first for CSS running element) -->
+<div class="footer">
+    <table class="footer-table">
+        <tr>
+            <td>Geschäftsführung: Jan Markmann</td>
+            <td>T: (0611) 945 897 -80</td>
+            <td>Commerzbank Düsseldorf</td>
+        </tr>
+        <tr>
+            <td>Handelsregister: 32062, AG Wiesbaden</td>
+            <td>F: (0611) 945 897 -81</td>
+            <td>BIC: COBADEDDXXX</td>
+        </tr>
+        <tr>
+            <td>USt.IdNr.: DE294406946</td>
+            <td>E: info@29ventures.com</td>
+            <td>IBAN: DE51 3004 0000 0122 0029 00</td>
+        </tr>
+    </table>
+</div>
+
+<!-- Sender line -->
+<div class="sender-line">29ventures GmbH &nbsp; Kleiststraße 23 &nbsp; 65187 Wiesbaden</div>
+
+<!-- Client address -->
+<div class="client-address">
+    <div class="name">{{ client_name }}</div>
+    <div>{{ client_address_line1 }}</div>
+    {% if client_address_line2 %}<div>{{ client_address_line2 }}</div>{% endif %}
+    <div>{{ client_zip_city }}</div>
+</div>
+
+<!-- Meta: date, invoice number, period -->
+<div class="meta">
+    <div class="location-date">Wiesbaden, {{ invoice_date }}</div>
+    <div class="invoice-number">Rechnung {{ invoice_number }}</div>
+    <div class="period">Leistungszeitraum {{ period }}</div>
+</div>
+
+<!-- Line items table -->
+<table class="invoice-table">
+    <thead>
+        <tr>
+            <th class="pos-col">Pos</th>
+            <th class="label-col">Bezeichnung</th>
+            <th class="amount-col">Betrag</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td class="pos-col">{{ item.position }}</td>
+            <td class="label-col">{{ item.label }}</td>
+            <td class="amount-col">{{ item.amount_formatted }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Summary -->
+<table class="summary-table">
+    <tr class="net-row">
+        <td class="label">Netto-Rechnungsbetrag</td>
+        <td class="amount">{{ net_total }}</td>
+    </tr>
+    <tr>
+        <td class="label">Umsatzsteuer 19%</td>
+        <td class="amount">{{ vat_amount }}</td>
+    </tr>
+    <tr class="gross-row">
+        <td class="label">Brutto-Rechnungsbetrag</td>
+        <td class="amount">{{ gross_total }}</td>
+    </tr>
+</table>
+
+</body>
+</html>

@@ -7,6 +7,13 @@
 | 1.0 | 2026-02-26 | Initial plan created from blueprint review + codebase exploration |
 | 1.1 | 2026-02-26 | Phase 0 + Phase 1 completed; Phase 2 completed |
 | 1.2 | 2026-02-26 | Phase 3 completed |
+| 1.3 | 2026-02-26 | Phase 4 completed |
+| 1.4 | 2026-02-26 | Phase 5 completed |
+| 1.5 | 2026-02-26 | Phase 6 completed |
+| 1.6 | 2026-02-26 | Phase 7 completed |
+| 1.7 | 2026-02-26 | Phase 8 completed |
+| 1.8 | 2026-02-26 | Phase 9 completed — quality & operational hardening (337 backend + 32 frontend tests) |
+| 1.9 | 2026-02-27 | Post-build: User Guide, Makefile, auto-seed on startup, DYLD_LIBRARY_PATH fix |
 
 ---
 
@@ -189,48 +196,66 @@ invoicemanager/
 
 ---
 
-### Phase 4: Invoice Generation Engine + PDF
+### Phase 4: Invoice Generation Engine + PDF ✅
 **Goal:** Preview, generate, and render invoices as HTML-to-PDF.
 
-**Files to create:**
-- `backend/services/invoice_engine.py`
-  - `preview_invoice(client_id, year, month, db)` — Dry-run: resolve amounts, calculate net/VAT/gross, return warnings
-  - `generate_invoice(request, db)` — Full workflow: resolve, apply overrides, render, store, link transactions
-  - VAT = round(net x 0.19, ROUND_HALF_UP)
-- `backend/services/invoice_renderer.py`
-  - Jinja2 HTML template rendering
-  - WeasyPrint HTML-to-PDF conversion
-- `data/templates/invoice.html` + `invoice.css`
-  - Match reference layout: A4, Helvetica Neue Light, 3-column table (Pos, Bezeichnung, Betrag)
-  - Header: logo, 29ventures GmbH address, client address, invoice number, period, date
-  - Summary: Netto, USt. 19%, Brutto
-  - Footer: bank details, company registration
-  - **Reference:** Extract exact layout from `AR202506-02.docx`
-- `backend/routers/invoices.py`
+**Files created:**
+- [x] `backend/services/invoice_engine.py`
+  - `preview_invoice(client_id, year, month, db)` — Dry-run via `resolve_line_items`
+  - `generate_invoice(...)` — Full workflow: resolve, apply overrides, render HTML/PDF, persist record + items
+  - Supports amount overrides per position
+  - Duplicate invoice number detection
+- [x] `backend/services/invoice_renderer.py`
+  - `render_invoice_html()` — Jinja2 template rendering with German formatting
+  - `render_invoice_pdf()` — WeasyPrint HTML-to-PDF
+  - `render_and_save_pdf()` — Render and write to disk
+- [x] `data/templates/invoice.html` + `invoice.css`
+  - A4 layout, Helvetica Neue Light, 3-column table (Pos, Bezeichnung, Betrag)
+  - Header: sender line, client address, invoice number, period, date
+  - Summary: Netto-Rechnungsbetrag, Umsatzsteuer 19%, Brutto-Rechnungsbetrag
+  - Footer: bank details (IBAN, BIC), company registration, contact info
+  - CSS @page with running footer element
+- [x] `backend/routers/invoices.py` — Updated with full endpoints:
   - `POST /api/invoices/preview` — Dry-run
-  - `POST /api/invoices` — Generate + store
-  - `GET /api/invoices/{id}/download` — PDF download
+  - `POST /api/invoices` — Generate + store + PDF
+  - `GET /api/invoices/{id}/download` — PDF download (FileResponse)
   - `PATCH /api/invoices/{id}/status` — Update status
   - `GET /api/invoices` — List with filters
+- [x] `backend/schemas/generated_invoice.py` — Added: `InvoicePreviewRequest`, `InvoicePreviewResponse`, `ResolvedLineItemResponse`, `InvoiceGenerateRequest`
+- [x] `tests/test_invoice_engine.py` — 34 tests
 
-**Verify:** Generate Jan 2025 invoice -> amounts match validation data (net 35,535.80, VAT 6,751.80, gross 42,287.60). PDF renders correctly.
+**Bug fix:** `cost_calculation.py` — `sum()` on empty items list returned `int(0)` instead of `Decimal("0")`, fixed with start value.
+
+**Note:** WeasyPrint requires `DYLD_LIBRARY_PATH=/opt/homebrew/lib` on macOS for PDF rendering. Tests mock `render_and_save_pdf` to avoid this dependency.
+
+**Verified:** 154/154 tests pass (120 from Phase 1-3 + 34 new).
 
 ---
 
-### Phase 5: Seed Data + Validation
+### Phase 5: Seed Data + Validation ✅
 **Goal:** Load all historical data, validate system produces correct amounts for Jan-Jun 2025.
 
-**Files to create:**
-- `backend/seed/seed_data.py` — All constants from `tracking.json` and blueprint section 8
+**Files created:**
+- [x] `backend/seed/seed_data.py` — All constants from `tracking.json` and blueprint
   - Client: DRS Holding AG (Am Sandtorkai 58, 20457 Hamburg)
-  - 4 cost categories with bank_keywords
-  - 6+1 line item definitions
+  - 4 cost categories (junior_fm, cloud_engineer, upwork_mobile, aeologic) with bank_keywords
+  - 7 line item definitions (6 regular + 1 optional Reisekosten)
   - Junior FM invoices: 12 months from tracking.json
-  - Kaletsch invoices: 4 quarterly with bank payments from tracking.json
-  - Aeologic invoices: 13 with drs_month_mapping from tracking.json (Jan + Apr marked as unclear)
+  - Kaletsch invoices: 4 quarterly with bank payments and covers_months
+  - Aeologic invoices: 13 originals + 6 DRS month-mapped (with synthetic combined invoices for Jan/Apr unclear sources)
+  - Upwork transactions: 6 synthetic monthly totals (one per validation month)
+  - Validation targets: expected amounts, historical overrides, auto-computed net totals
   - Working days config: DE/HE
-- `backend/seed/loader.py` — Idempotent loading with `python -m backend.seed.loader`
-- `tests/test_seed_validation.py` — Parametrized test for all 6 months:
+- [x] `backend/seed/loader.py` — Idempotent loading with `python -m backend.seed.loader`
+  - Individual seed functions per entity type (client, categories, definitions, invoices, bank txns, upwork txns)
+  - `seed_all(db)` orchestrator with idempotency check (returns bool)
+  - `__main__` block with summary output
+- [x] `tests/test_seed_validation.py` — 87 tests across 3 test classes:
+  - `TestSeedLoader` (9 tests): verifies all entities are created correctly
+  - `TestAutoComputedPreview` (48 tests): verifies auto-computed values for each cost type per month
+  - `TestHistoricalValidation` (30 tests): with overrides, verifies exact historical amounts
+
+**Validation results** (all 6 months match with Pos 4 overrides):
 
   | Month | Net | VAT | Gross |
   |-------|-----|-----|-------|
@@ -241,53 +266,172 @@ invoicemanager/
   | May 2025 | 39,468.65 | 7,499.04 | 46,967.69 |
   | Jun 2025 | 36,587.69 | 6,951.66 | 43,539.35 |
 
-**Note:** Aeologic months Jan 2025 (1,551.41) and Apr 2025 (8,238.89) have unclear source mappings (noted in tracking.json). Seed these as manual assignments for now; user will verify later.
+**Key findings:**
+- Pos 4 (Kaletsch distributed) auto-computed values differ from historical due to working-day algorithm vs original manual process. Overrides resolve this.
+- Aeologic Jan 2025 (€1,551.41) and Apr 2025 (€8,238.89) seeded as synthetic combined invoices with notes about ambiguous sources.
+- Feb 2025 Reisekosten (€286.97) handled via Pos 7 override on manual line item.
+
+**Verified:** 241/241 tests pass (154 from Phase 1-4 + 87 new).
 
 ---
 
-### Phase 6: React Frontend
+### Phase 6: React Frontend ✅
 **Goal:** Full UI for all workflows.
 
-**Phase 6A — Scaffold + core pages:**
-- Vite + React + Tailwind + React Router
-- `vite.config.ts` with proxy `/api` -> `localhost:8000`
-- `Layout.tsx` — Sidebar navigation (Dashboard, Invoices, Categories, Provider Invoices, Bank, Upwork, Payments, Settings)
-- `Dashboard.tsx` — Monthly overview with status cards per category
-- `InvoiceGenerate.tsx` — Month/client selector -> preview -> override -> invoice number + date inputs -> generate -> download PDF
-- `InvoiceList.tsx` — Table of generated invoices with status, download, status update
+**Stack:** React 18, React Router v6, TanStack Query v5, Tailwind CSS v4, Vite 6, TypeScript
 
-**Phase 6B — Data management pages:**
-- `CostCategories.tsx` + `CostCategoryDetail.tsx` — CRUD with bank keywords tag input
-- `ProviderInvoices.tsx` — Category-first upload, PDF upload, metadata entry
-- `BankTransactions.tsx` — XLSX import with preview, auto-matched categories, manual assignment
-- `UpworkTransactions.tsx` — XLSX import with preview, month assignments
-- `Payments.tsx` — Record incoming payments, match to invoices
-- `Settings.tsx` — Client config, line item definitions
+**Files created (34 total):**
 
-**Reusable components:** `MonthSelector`, `AmountDisplay` (German format), `StatusBadge`, `FileUpload`, `DataTable`, `ConfirmDialog`
+**Scaffold (7 files):**
+- [x] `frontend/package.json` — Dependencies (react 18, react-router-dom 6, @tanstack/react-query 5, tailwindcss 4)
+- [x] `frontend/tsconfig.json` + `tsconfig.node.json` — Strict TS with `@/*` path alias
+- [x] `frontend/vite.config.ts` — React + Tailwind plugins, proxy `/api` -> `localhost:8000`
+- [x] `frontend/index.html` — Entry with `lang="de"`
+- [x] `frontend/src/app.css` — Tailwind v4 `@import "tailwindcss"`
+- [x] `frontend/src/vite-env.d.ts` — Vite types
+
+**Types + utilities (2 files):**
+- [x] `frontend/src/types/api.ts` — All TypeScript interfaces mirroring backend Pydantic schemas
+- [x] `frontend/src/utils/format.ts` — German EUR formatting, date formatting, invoice number generation, status config
+
+**API layer (2 files):**
+- [x] `frontend/src/api/client.ts` — Typed fetch wrappers for all 10 API namespaces (clients, invoices, bank, upwork, etc.)
+- [x] `frontend/src/hooks/useApi.ts` — TanStack Query hooks with query keys, mutations, and cache invalidation
+
+**Reusable components (8 files):**
+- [x] `AmountDisplay.tsx`, `StatusBadge.tsx`, `MonthSelector.tsx`, `DataTable.tsx`
+- [x] `ConfirmDialog.tsx`, `FileUpload.tsx`, `PageHeader.tsx`, `Layout.tsx`
+
+**Core pages (5 files):**
+- [x] `Dashboard.tsx` — Monthly overview, summary cards, recent invoices, quick links
+- [x] `InvoiceGenerate.tsx` — Multi-step: select month+client -> preview with editable amounts -> set invoice number/date -> generate -> download PDF
+- [x] `InvoiceList.tsx` — Filterable table with status badges, PDF download, inline status update
+- [x] `InvoiceDetail.tsx` — Full invoice view with line items, totals, status update, linked payments
+- [x] `NotFound.tsx` — 404 page
+
+**Data management pages (7 files):**
+- [x] `CostCategories.tsx` — Category list with DataTable
+- [x] `CostCategoryDetail.tsx` — Detail view with bank keywords, linked invoices/transactions
+- [x] `ProviderInvoices.tsx` — List with category/month filters, PDF download links
+- [x] `BankTransactions.tsx` — XLSX import, inline category assignment, unmatched row highlighting
+- [x] `UpworkTransactions.tsx` — XLSX import, month summaries, transaction list
+- [x] `Payments.tsx` — Create/delete payments, invoice matching
+- [x] `Settings.tsx` — Client config editor, line item definition editor
+
+**Routing (2 files):**
+- [x] `frontend/src/router.tsx` — All routes under Layout with React Router v6
+- [x] `frontend/src/main.tsx` — Entry: QueryClientProvider + RouterProvider
+
+**Verified:** `npm install` (88 packages, 0 vulnerabilities), `tsc --noEmit` (0 errors), `vite build` (310 KB JS bundle). Backend 241/241 tests still pass.
 
 ---
 
-### Phase 7: MCP Server
+### Phase 7: MCP Server ✅
 **Goal:** 10 query tools + 7 action tools + 3 resources.
 
-- `mcp_server/server.py` — FastMCP entry point, shares SQLAlchemy models + services with backend
-- **Query tools:** get_invoice_status, get_month_overview, get_open_invoices, get_category_costs, get_reconciliation, get_missing_data, get_upwork_summary, search_transactions, get_working_days, get_distribution
-- **Action tools:** generate_invoice, import_upwork_xlsx, import_bank_statement, record_provider_invoice, link_bank_payment, record_payment, update_invoice_status
-- **Resources:** invoices://overview/{month}, invoices://client/{id}, invoices://category/{id}
+**Files created (6 total):**
+- [x] `mcp_server/db.py` — Session context manager for tool calls
+- [x] `mcp_server/server.py` — FastMCP entry point with lifespan, imports tools/resources
+- [x] `mcp_server/__main__.py` — `python -m mcp_server` convenience entry
+- [x] `mcp_server/tools_query.py` — 10 read-only query tools
+- [x] `mcp_server/tools_action.py` — 7 action tools (DB writes)
+- [x] `mcp_server/resources.py` — 3 resource templates
+- [x] `tests/test_mcp_server.py` — 36 tests
 
-**Verify:** `mcp dev mcp_server/server.py`, test each tool via MCP inspector.
+**Query tools (10):**
+- `get_invoice_status` — by number, ID, or month
+- `get_month_overview` — full preview with all line items and totals
+- `get_open_invoices` — unpaid invoices list
+- `get_category_costs` — costs per category with month range filter
+- `get_reconciliation` — provider invoices vs bank payments
+- `get_missing_data` — data gap detection for a month
+- `get_upwork_summary` — Upwork transaction summary
+- `search_transactions` — keyword search across bank/upwork
+- `get_working_days` — Hessen working days for a month
+- `get_distribution` — working-day cost distribution calculator
+
+**Action tools (7):**
+- `generate_invoice` — full generation (resolve, render PDF, persist)
+- `import_upwork_xlsx` — import Upwork XLSX
+- `import_bank_statement` — import bank statement XLSX
+- `record_provider_invoice` — create provider invoice record
+- `link_bank_payment` — link bank transaction to provider invoice
+- `record_payment` — record client payment receipt
+- `update_invoice_status` — change invoice status
+
+**Resources (3):**
+- `invoices://overview/{month}` — monthly overview as markdown
+- `invoices://client/{client_id}` — client info + recent invoices
+- `invoices://category/{category_id}` — category details + transactions
+
+**Architecture:** Separate process sharing SQLite DB via WAL mode. Session-per-tool-call pattern. Tools return formatted German text (never raise). stdio transport.
+
+**Verified:** 277/277 tests pass (241 from Phase 1-6 + 36 new).
 
 ---
 
-### Phase 8: Polish + Dashboard + Reconciliation
+### Phase 8: Polish + Dashboard + Reconciliation ✅
 **Goal:** Error handling, reconciliation views, final quality.
+**Status:** Complete (310 tests pass, 0 TS errors, 322KB bundle)
 
-- Dashboard aggregation: `GET /api/dashboard/monthly/{year}/{month}`, `/open-invoices`, `/reconciliation/{year}/{month}`
-- Reconciliation service: provider invoices vs bank payments, generated invoices vs client payments
-- Input validation, error handling, file type/size limits
-- Invoice re-generation with version archival
-- Frontend: loading states, empty states, error boundaries
+**Backend (9 files):**
+- `backend/services/file_validation.py` — upload validation (XLSX 10MB, PDF 20MB)
+- `backend/services/reconciliation.py` — shared reconciliation service (dataclasses)
+- `backend/schemas/dashboard.py` — dashboard + reconciliation response schemas
+- `backend/routers/dashboard.py` — 3 endpoints: monthly, open-invoices, reconciliation
+- `backend/services/invoice_engine.py` — added `regenerate_invoice()` with PDF archival
+- `backend/routers/invoices.py` — added `POST /api/invoices/{id}/regenerate`
+- Upload validation added to bank/upwork/provider-invoice import endpoints
+- MCP `get_reconciliation()` refactored to use shared service
+
+**Frontend (12 files):**
+- `ErrorBoundary` wraps `<Outlet />` in Layout; `ErrorAlert` on all 8 list pages
+- Dashboard enhanced: open invoices card, reconciliation summary section
+- New Reconciliation page: month selector, provider vs bank table, unmatched transactions, payment status
+- InvoiceDetail: "Neu generieren" button (draft/overdue only) with ConfirmDialog
+- New hooks: `useDashboardMonthly`, `useDashboardOpenInvoices`, `useDashboardReconciliation`, `useRegenerateInvoice`
+
+**Tests (3 files, 33 new tests):**
+- `tests/test_file_validation.py` — 11 tests
+- `tests/test_dashboard.py` — 16 tests (reconciliation service, dashboard API, upload validation)
+- `tests/test_invoice_engine.py` — 6 regeneration tests added
+
+---
+
+## Phase 9 — Quality, Reliability & Operational Hardening
+
+All functional features are complete. Phase 9 adds operational safeguards.
+
+### Sub-phase 9A: CI Pipeline + Structured Logging
+- [x] `.github/workflows/ci.yml` — GitHub Actions (pytest + typecheck + test + build)
+- [x] `backend/logging_config.py` — stdlib logging setup
+- [x] Add `logger.info()` to invoice_engine, bank_import, upwork_import, invoice_renderer
+
+### Sub-phase 9B: Database Migrations + Backup
+- [x] Alembic setup (`alembic.ini`, `alembic/env.py`, initial migration)
+- [x] Replace `create_all()` with `alembic upgrade head` in `main.py` lifespan
+- [x] `backend/services/backup.py` + `backend/routers/backup.py` — SQLite online backup
+- [x] `tests/test_backup.py` (11 tests)
+
+### Sub-phase 9C: API Pagination + WeasyPrint Check
+- [x] `backend/schemas/pagination.py` — generic `PaginatedResponse[T]`
+- [x] Add `skip`/`limit` params to all 8 list routers
+- [x] WeasyPrint startup check in `main.py` lifespan
+
+### Sub-phase 9D: Frontend Tests + E2E XLSX Validation
+- [x] Vitest + React Testing Library setup (`vitest.config.ts`, `test/setup.ts`)
+- [x] Tests for `format.ts` (19), AmountDisplay (4), StatusBadge (4), MonthSelector (5) — 32 total
+- [x] `tests/test_xlsx_import_e2e.py` — real XLSX import validation (16 tests)
+
+---
+
+### Post-Build: User Guide, Makefile & DX Improvements ✅
+**Goal:** Documentation and developer experience polish.
+
+- [x] `docs/USER-GUIDE.md` — 3-section guide: How to Run, Functionality Explained, User Tests (12-step checklist with validation table)
+- [x] `Makefile` — `setup`, `dev`, `backend`, `frontend`, `test`, `seed` targets
+- [x] `backend/main.py` — Auto-seed on first startup via `seed_all()` in lifespan (idempotent)
+- [x] `Makefile` — `DYLD_LIBRARY_PATH=/opt/homebrew/lib` inlined on uvicorn commands (macOS SIP strips env vars from `/usr/bin/make` child processes)
 
 ---
 

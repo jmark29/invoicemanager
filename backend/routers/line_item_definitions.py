@@ -16,12 +16,15 @@ router = APIRouter(prefix="/api/line-item-definitions", tags=["line-item-definit
 
 @router.get("", response_model=list[LineItemDefinitionResponse])
 def list_line_item_definitions(
-    client_id: str | None = None, db: Session = Depends(get_db)
+    client_id: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
 ):
     query = db.query(LineItemDefinition)
     if client_id:
         query = query.filter(LineItemDefinition.client_id == client_id)
-    return query.order_by(LineItemDefinition.sort_order, LineItemDefinition.position).all()
+    return query.order_by(LineItemDefinition.sort_order, LineItemDefinition.position).offset(skip).limit(limit).all()
 
 
 @router.get("/{definition_id}", response_model=LineItemDefinitionResponse)

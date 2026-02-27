@@ -1,0 +1,420 @@
+{
+  "upwork_transactions": {},
+  "external_invoices": {
+    "junior_fm": {
+      "provider": "Mikhail Iakovlev",
+      "location": "Wien, Österreich",
+      "rate": "50 EUR/h",
+      "vat": "exempt (Kleinunternehmerregelung)",
+      "pos": 3,
+      "invoices": {
+        "2025-01": {
+          "invoice_nr": "01/2025",
+          "file": "ER2501-19.pdf",
+          "hours": 26,
+          "amount": 1300.0
+        },
+        "2025-02": {
+          "invoice_nr": "02/2025",
+          "file": "ER2502-17.pdf",
+          "hours": 76,
+          "amount": 3800.0
+        },
+        "2025-03": {
+          "invoice_nr": "03/2025",
+          "file": "ER2503-04.pdf",
+          "hours": 40,
+          "amount": 2000.0
+        },
+        "2025-04": {
+          "invoice_nr": "04/2025",
+          "file": "ER2504-11.pdf",
+          "hours": 40,
+          "amount": 2000.0
+        },
+        "2025-05": {
+          "invoice_nr": "05/2025",
+          "file": "ER2505-16.pdf",
+          "hours": 32,
+          "amount": 1600.0
+        },
+        "2025-06": {
+          "invoice_nr": "06/2025",
+          "file": "ER2506-16.pdf",
+          "hours": 36,
+          "amount": 1800.0
+        },
+        "2025-07": {
+          "invoice_nr": "07/2025",
+          "file": "ER2507-04.pdf",
+          "hours": 32,
+          "amount": 1600.0
+        },
+        "2025-08": {
+          "invoice_nr": "08/2025",
+          "file": "ER2508-12.pdf",
+          "hours": 14,
+          "amount": 700.0
+        },
+        "2025-09": {
+          "invoice_nr": "09/2025",
+          "file": "ER2509-08.pdf",
+          "hours": 32,
+          "amount": 1600.0
+        },
+        "2025-10": {
+          "invoice_nr": "10/2025",
+          "file": "ER2510-02.pdf",
+          "hours": 32,
+          "amount": 1600.0
+        },
+        "2025-11": {
+          "invoice_nr": "11/2025",
+          "file": "ER2511-12.pdf",
+          "hours": 32,
+          "amount": 1600.0
+        },
+        "2025-12": {
+          "invoice_nr": "12/2025",
+          "file": "ER2512-21.pdf",
+          "hours": 32,
+          "amount": 1600.0
+        }
+      }
+    },
+    "cloud_engineer": {
+      "provider": "The Kaletsch Company Pty Ltd",
+      "location": "Gillitts, South Africa",
+      "rate": "36 EUR/h",
+      "pos": 4,
+      "invoices": {
+        "Q1-2025": {
+          "invoice_nr": "INV307",
+          "date": "2025-03-01",
+          "file": "Kaletsch - Cloud engineer/",
+          "hours": 230,
+          "amount": 8280.0,
+          "bank_payment": {
+            "date": "2025-01-06",
+            "eur": 8295.0,
+            "fee": 15.0
+          },
+          "months": [
+            "2025-01",
+            "2025-02",
+            "2025-03"
+          ]
+        },
+        "Q2-2025": {
+          "invoice_nr": "INV308",
+          "date": "2025-03-31",
+          "file": "Kaletsch - Cloud engineer/",
+          "hours": 234,
+          "amount": 8424.0,
+          "bank_payment": {
+            "date": "2025-04-14",
+            "eur": 8439.14,
+            "fee": 15.14
+          },
+          "months": [
+            "2025-04",
+            "2025-05",
+            "2025-06"
+          ]
+        },
+        "Q3-2025": {
+          "invoice_nr": "INV314",
+          "date": "2025-07-01",
+          "file": "Kaletsch - Cloud engineer/",
+          "hours": 260.3,
+          "amount": 9370.8,
+          "note": "Includes 22.7h Q2 adjustment (€817.20)",
+          "bank_payment": {
+            "date": "2025-07-15",
+            "eur": 9387.36,
+            "fee": 16.56
+          },
+          "months": [
+            "2025-07",
+            "2025-08",
+            "2025-09"
+          ]
+        },
+        "Q4-2025": {
+          "invoice_nr": "INV320",
+          "date": "2025-09-30",
+          "file": "Kaletsch - Cloud engineer/",
+          "hours": 237.6,
+          "amount": 8553.6,
+          "bank_payment": {
+            "date": "2025-10-20",
+            "eur": 8568.93,
+            "fee": 15.33
+          },
+          "months": [
+            "2025-10",
+            "2025-11",
+            "2025-12"
+          ]
+        }
+      }
+    },
+    "aeologic": {
+      "provider": "Aeologic Technologies Pvt. Ltd.",
+      "location": "Noida, India",
+      "currency": "USD",
+      "pos": 6,
+      "note": "USD invoices, paid via bank transfer with FX conversion + ~€22.50 fee. DRS Pos 6 = EUR bank payment amount.",
+      "invoices": {
+        "AEO000716": {
+          "date": "2024-12",
+          "usd": 900.0,
+          "hours": null,
+          "rate": 25,
+          "bank_eur": 899.89,
+          "bank_date": "2025-01-06"
+        },
+        "AEO000729": {
+          "date": "2025-01-30",
+          "usd": 1650.0,
+          "hours": 66,
+          "rate": 25,
+          "bank_eur": 1477.4,
+          "bank_date": "2025-05-26"
+        },
+        "AEO000741": {
+          "date": "2025-02-28",
+          "usd": 1100.0,
+          "hours": 44,
+          "rate": 25,
+          "bank_eur": 1036.28,
+          "bank_date": "2025-03-31"
+        },
+        "AEO000749": {
+          "date": "2025-03-25",
+          "usd": 5500.0,
+          "hours": 220,
+          "rate": 25,
+          "bank_eur": 5079.51,
+          "bank_date": "2025-04-07"
+        },
+        "AEO000768": {
+          "date": "2025-05-01",
+          "usd": 9075.0,
+          "hours": 363,
+          "rate": 25,
+          "bank_eur": 8092.64,
+          "bank_date": "2025-05-23"
+        },
+        "AEO000777": {
+          "date": "2025-05-30",
+          "usd": 7140.0,
+          "hours": 255,
+          "rate": 28,
+          "bank_eur": 6122.2,
+          "bank_date": "2025-07-07"
+        },
+        "AEO000789": {
+          "date": "2025-07-01",
+          "usd": 2898.0,
+          "hours": 103.5,
+          "rate": 28,
+          "bank_eur": 2512.79,
+          "bank_date": "2025-08-14"
+        },
+        "AEO000802": {
+          "date": "2025-08",
+          "usd": null,
+          "hours": null,
+          "rate": 28,
+          "bank_eur": 1273.66,
+          "bank_date": "2025-08-14",
+          "note": "No invoice PDF found"
+        },
+        "AEO000811": {
+          "date": "2025-08-29",
+          "usd": 1456.0,
+          "hours": 52,
+          "rate": 28,
+          "bank_eur": 1276.43,
+          "bank_date": "2025-09-26"
+        },
+        "AEO000819": {
+          "date": "2025-09-30",
+          "usd": 784.0,
+          "hours": 28,
+          "rate": 28,
+          "bank_eur": null,
+          "note": "No bank payment found yet"
+        },
+        "AEO000828": {
+          "date": "2025-10-31",
+          "usd": 1246.0,
+          "hours": 44.5,
+          "rate": 28,
+          "bank_eur": null,
+          "note": "No bank payment found yet"
+        },
+        "AEO000844": {
+          "date": "2025-12-01",
+          "usd": 812.0,
+          "hours": 29,
+          "rate": 28,
+          "bank_eur": null,
+          "note": "No bank payment found yet"
+        },
+        "AEO000852": {
+          "date": "2025-12-30",
+          "usd": 1302.0,
+          "hours": 46.5,
+          "rate": 28,
+          "bank_eur": null,
+          "note": "No bank payment found yet"
+        },
+        "AEO000861": {
+          "date": "2026-02-03",
+          "usd": 952.0,
+          "hours": 34,
+          "rate": 28,
+          "bank_eur": null,
+          "note": "No bank payment found yet"
+        }
+      },
+      "drs_month_mapping": {
+        "2025-01": {
+          "source": "AEO000716 (€899.89) + Vorgänger-RE?",
+          "billed_eur": 1551.41,
+          "note": "Nicht eindeutig zuordenbar"
+        },
+        "2025-02": {
+          "source": "AEO000741",
+          "billed_eur": 1036.28,
+          "bank_eur": 1036.28
+        },
+        "2025-03": {
+          "source": "AEO000749",
+          "billed_eur": 5079.51,
+          "bank_eur": 5079.51
+        },
+        "2025-04": {
+          "source": "AEO000768 + AEO000729?",
+          "billed_eur": 8238.89,
+          "note": "Kombination unklar"
+        },
+        "2025-05": {
+          "source": "AEO000777",
+          "billed_eur": 6122.2,
+          "bank_eur": 6122.2
+        },
+        "2025-06": {
+          "source": "AEO000789",
+          "billed_eur": 2512.79,
+          "bank_eur": 2512.79
+        }
+      }
+    }
+  },
+  "generated_invoices": {
+    "202501-02": {
+      "client": "drs",
+      "period": "2025-01",
+      "invoice_date": "2025-02-28",
+      "line_items": {
+        "1": 16450.0,
+        "2": 8300.0,
+        "3": 1300.0,
+        "4": 2851.2,
+        "5": 5083.19,
+        "6": 1551.41
+      },
+      "net_total": 35535.8,
+      "vat": 6751.8,
+      "gross_total": 42287.6
+    },
+    "202502-02": {
+      "client": "drs",
+      "period": "2025-02",
+      "invoice_date": "2025-03-22",
+      "line_items": {
+        "1": 16450.0,
+        "2": 8300.0,
+        "3": 3800.0,
+        "4": 2592.0,
+        "5": 4200.84,
+        "6": 1036.28,
+        "7_Reisekosten": 286.97
+      },
+      "net_total": 36666.09,
+      "vat": 6966.56,
+      "gross_total": 43632.65
+    },
+    "202503-02": {
+      "client": "drs",
+      "period": "2025-03",
+      "invoice_date": "2025-04-10",
+      "line_items": {
+        "1": 16450.0,
+        "2": 8300.0,
+        "3": 2000.0,
+        "4": 2851.8,
+        "5": 3843.43,
+        "6": 5079.51
+      },
+      "net_total": 38524.74,
+      "vat": 7319.7,
+      "gross_total": 45844.44
+    },
+    "202504-02": {
+      "client": "drs",
+      "period": "2025-04",
+      "invoice_date": "2025-05-12",
+      "line_items": {
+        "1": 16450.0,
+        "2": 8300.0,
+        "3": 2000.0,
+        "4": 2851.2,
+        "5": 3884.03,
+        "6": 8238.89
+      },
+      "net_total": 41724.12,
+      "vat": 7927.58,
+      "gross_total": 49651.7
+    },
+    "202505-02": {
+      "client": "drs",
+      "period": "2025-05",
+      "invoice_date": "2025-07-07",
+      "line_items": {
+        "1": 16450.0,
+        "2": 8300.0,
+        "3": 1600.0,
+        "4": 2851.2,
+        "5": 4145.25,
+        "6": 6122.2
+      },
+      "net_total": 39468.65,
+      "vat": 7499.04,
+      "gross_total": 46967.69
+    },
+    "202506-02": {
+      "client": "drs",
+      "period": "2025-06",
+      "invoice_date": "2025-09-05",
+      "line_items": {
+        "1": 16450.0,
+        "2": 8300.0,
+        "3": 1800.0,
+        "4": 2851.2,
+        "5": 4673.7,
+        "6": 2512.79
+      },
+      "net_total": 36587.69,
+      "vat": 6951.66,
+      "gross_total": 43539.35
+    }
+  },
+  "_meta": {
+    "last_updated": "2026-02-25",
+    "notes": "Tracking-Datei fuer Rechnungsgenerierung. upwork_transactions trackt welche Transaktion in welcher Rechnung beruecksichtigt wurde. external_invoices enthaelt alle Eingangsrechnungen der externen Dienstleister."
+  }
+}

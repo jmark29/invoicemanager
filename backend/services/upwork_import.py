@@ -8,9 +8,12 @@ Columns: Date, Transaction ID, Transaction type, Transaction summary details,
          Description 1, Ref ID, Amount in local currency, Currency, Payment method
 """
 
+import logging
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
+
+logger = logging.getLogger(__name__)
 
 from openpyxl import load_workbook
 from sqlalchemy.orm import Session
@@ -245,4 +248,8 @@ def import_upwork_transactions(
         db.commit()
 
     result.imported = len(imported)
+    logger.info(
+        "Upwork import: %d imported, %d duplicates skipped",
+        result.imported, result.skipped_duplicate,
+    )
     return result

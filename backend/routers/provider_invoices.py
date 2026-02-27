@@ -15,6 +15,7 @@ from backend.schemas.provider_invoice import (
     ProviderInvoiceResponse,
     ProviderInvoiceUpdate,
 )
+from backend.services.file_validation import validate_pdf
 from backend.services.provider_invoice_service import get_provider_invoice_path
 
 router = APIRouter(prefix="/api/provider-invoices", tags=["provider-invoices"])
@@ -24,6 +25,8 @@ router = APIRouter(prefix="/api/provider-invoices", tags=["provider-invoices"])
 def list_provider_invoices(
     category_id: str | None = None,
     assigned_month: str | None = None,
+    skip: int = 0,
+    limit: int = 500,
     db: Session = Depends(get_db),
 ):
     query = db.query(ProviderInvoice)
@@ -31,7 +34,7 @@ def list_provider_invoices(
         query = query.filter(ProviderInvoice.category_id == category_id)
     if assigned_month:
         query = query.filter(ProviderInvoice.assigned_month == assigned_month)
-    return query.order_by(ProviderInvoice.invoice_date.desc()).all()
+    return query.order_by(ProviderInvoice.invoice_date.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{invoice_id}", response_model=ProviderInvoiceResponse)
@@ -87,6 +90,8 @@ def delete_provider_invoice(invoice_id: int, db: Session = Depends(get_db)):
 def upload_provider_invoice_pdf(
     invoice_id: int, file: UploadFile, db: Session = Depends(get_db)
 ):
+    validate_pdf(file)
+
     inv = db.get(ProviderInvoice, invoice_id)
     if not inv:
         raise HTTPException(404, f"Provider invoice {invoice_id} not found")
