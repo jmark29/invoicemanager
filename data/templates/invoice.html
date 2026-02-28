@@ -10,25 +10,25 @@
 <div class="footer">
     <table class="footer-table">
         <tr>
-            <td>Geschäftsführung: Jan Markmann</td>
-            <td>T: (0611) 945 897 -80</td>
-            <td>Commerzbank Düsseldorf</td>
+            <td>Geschäftsführung: {{ company.managing_director if company and company.managing_director else 'Jan Markmann' }}</td>
+            <td>T: {{ company.phone if company and company.phone else '(0611) 945 897 -80' }}</td>
+            <td>{{ company.bank_name if company and company.bank_name else 'Commerzbank Düsseldorf' }}</td>
         </tr>
         <tr>
-            <td>Handelsregister: 32062, AG Wiesbaden</td>
-            <td>F: (0611) 945 897 -81</td>
-            <td>BIC: COBADEDDXXX</td>
+            <td>{{ company.register_info if company and company.register_info else 'Handelsregister: 32062, AG Wiesbaden' }}</td>
+            <td>F: {{ company.fax if company and company.fax else '(0611) 945 897 -81' }}</td>
+            <td>BIC: {{ company.bic if company and company.bic else 'COBADEDDXXX' }}</td>
         </tr>
         <tr>
-            <td>USt.IdNr.: DE294406946</td>
-            <td>E: info@29ventures.com</td>
-            <td>IBAN: DE51 3004 0000 0122 0029 00</td>
+            <td>USt.IdNr.: {{ company.vat_id if company and company.vat_id else 'DE294406946' }}</td>
+            <td>E: {{ company.email if company and company.email else 'info@29ventures.com' }}</td>
+            <td>IBAN: {{ company.iban if company and company.iban else 'DE51 3004 0000 0122 0029 00' }}</td>
         </tr>
     </table>
 </div>
 
 <!-- Sender line -->
-<div class="sender-line">29ventures GmbH &nbsp; Kleiststraße 23 &nbsp; 65187 Wiesbaden</div>
+<div class="sender-line">{{ company.company_name if company and company.company_name else '29ventures GmbH' }} &nbsp; {{ company.address_line1 if company and company.address_line1 else 'Kleiststraße 23' }} &nbsp; {{ company.zip_city if company and company.zip_city else '65187 Wiesbaden' }}</div>
 
 <!-- Client address -->
 <div class="client-address">

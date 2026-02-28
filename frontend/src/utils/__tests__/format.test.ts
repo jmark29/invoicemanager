@@ -11,31 +11,31 @@ import {
 
 describe('formatEur', () => {
   it('formats a positive amount with German separators', () => {
-    expect(formatEur(1234.56)).toBe('1.234,56 \u20AC')
+    expect(formatEur(1234.56)).toBe('1.234,56 €')
   })
 
   it('formats zero', () => {
-    expect(formatEur(0)).toBe('0,00 \u20AC')
+    expect(formatEur(0)).toBe('0,00 €')
   })
 
   it('formats a negative amount', () => {
-    expect(formatEur(-500.5)).toBe('-500,50 \u20AC')
+    expect(formatEur(-500.5)).toBe('-500,50 €')
   })
 
   it('formats a large amount matching invoice net total', () => {
-    expect(formatEur(35535.8)).toBe('35.535,80 \u20AC')
+    expect(formatEur(35535.8)).toBe('35.535,80 €')
   })
 
   it('formats an amount with no decimal part', () => {
-    expect(formatEur(1000)).toBe('1.000,00 \u20AC')
+    expect(formatEur(1000)).toBe('1.000,00 €')
   })
 
   it('rounds to 2 decimal places', () => {
-    expect(formatEur(99.999)).toBe('100,00 \u20AC')
+    expect(formatEur(99.999)).toBe('100,00 €')
   })
 
   it('handles small amounts', () => {
-    expect(formatEur(0.01)).toBe('0,01 \u20AC')
+    expect(formatEur(0.01)).toBe('0,01 €')
   })
 })
 
@@ -55,7 +55,7 @@ describe('formatMonthYear', () => {
   })
 
   it('formats March with umlaut', () => {
-    expect(formatMonthYear(2025, 3)).toBe('M\u00E4rz 2025')
+    expect(formatMonthYear(2025, 3)).toBe('März 2025')
   })
 
   it('formats December', () => {
@@ -97,7 +97,7 @@ describe('STATUS_CONFIG', () => {
     expect(STATUS_CONFIG.draft.label).toBe('Entwurf')
     expect(STATUS_CONFIG.sent.label).toBe('Versendet')
     expect(STATUS_CONFIG.paid.label).toBe('Bezahlt')
-    expect(STATUS_CONFIG.overdue.label).toBe('\u00DCberf\u00E4llig')
+    expect(STATUS_CONFIG.overdue.label).toBe('Überfällig')
   })
 
   it('has color classes for all statuses', () => {

@@ -20,6 +20,6 @@ describe('StatusBadge', () => {
 
   it('renders overdue status in German', () => {
     render(<StatusBadge status="overdue" />)
-    expect(screen.getByText('\u00DCberf\u00E4llig')).toBeInTheDocument()
+    expect(screen.getByText('Überfällig')).toBeInTheDocument()
   })
 })

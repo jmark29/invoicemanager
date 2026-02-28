@@ -3,8 +3,10 @@
 from backend.models.base import Base
 from backend.models.bank_transaction import BankTransaction
 from backend.models.client import Client
+from backend.models.company_settings import CompanySettings
 from backend.models.cost_category import CostCategory
 from backend.models.generated_invoice import GeneratedInvoice, GeneratedInvoiceItem
+from backend.models.import_history import ImportHistory
 from backend.models.line_item_definition import LineItemDefinition
 from backend.models.payment_receipt import PaymentReceipt
 from backend.models.provider_invoice import ProviderInvoice
@@ -15,9 +17,11 @@ __all__ = [
     "Base",
     "BankTransaction",
     "Client",
+    "CompanySettings",
     "CostCategory",
     "GeneratedInvoice",
     "GeneratedInvoiceItem",
+    "ImportHistory",
     "LineItemDefinition",
     "PaymentReceipt",
     "ProviderInvoice",

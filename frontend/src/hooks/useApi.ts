@@ -3,6 +3,7 @@ import {
   clientsApi, costCategoriesApi, lineItemDefsApi,
   providerInvoicesApi, bankTransactionsApi, upworkTransactionsApi,
   invoicesApi, paymentsApi, workingDaysApi, dashboardApi,
+  companySettingsApi,
 } from '@/api/client'
 import type {
   ClientCreate, ClientUpdate,
@@ -11,6 +12,7 @@ import type {
   ProviderInvoiceCreate, ProviderInvoiceUpdate,
   BankTransactionUpdate,
   UpworkTransactionUpdate,
+  CompanySettingsUpdate,
   InvoicePreviewRequest, InvoiceGenerateRequest, InvoiceStatusUpdate, InvoiceRegenerateRequest,
   PaymentReceiptCreate, PaymentReceiptUpdate,
 } from '@/types/api'
@@ -195,8 +197,19 @@ export function useUpdateBankTransaction() {
 export function useImportBankXlsx() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (file: File) => bankTransactionsApi.importXlsx(file),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['bankTransactions'] }) },
+    mutationFn: ({ file, forceImportAll = false }: { file: File; forceImportAll?: boolean }) =>
+      bankTransactionsApi.importXlsx(file, forceImportAll),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['bankTransactions'] })
+      void qc.invalidateQueries({ queryKey: ['bankImportHistory'] })
+    },
+  })
+}
+
+export function useBankImportHistory() {
+  return useQuery({
+    queryKey: ['bankImportHistory'],
+    queryFn: () => bankTransactionsApi.importHistory(),
   })
 }
 
@@ -222,7 +235,17 @@ export function useImportUpworkXlsx() {
   return useMutation({
     mutationFn: ({ file, categoryId }: { file: File; categoryId?: string }) =>
       upworkTransactionsApi.importXlsx(file, categoryId),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['upworkTransactions'] }) },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['upworkTransactions'] })
+      void qc.invalidateQueries({ queryKey: ['upworkImportHistory'] })
+    },
+  })
+}
+
+export function useUpworkImportHistory() {
+  return useQuery({
+    queryKey: ['upworkImportHistory'],
+    queryFn: () => upworkTransactionsApi.importHistory(),
   })
 }
 
@@ -349,5 +372,22 @@ export function useRegenerateInvoice() {
       void qc.invalidateQueries({ queryKey: ['dashboardMonthly'] })
       void qc.invalidateQueries({ queryKey: ['dashboardOpenInvoices'] })
     },
+  })
+}
+
+// ── Company Settings ──────────────────────────────────────────
+
+export function useCompanySettings() {
+  return useQuery({
+    queryKey: ['companySettings'],
+    queryFn: () => companySettingsApi.get(),
+  })
+}
+
+export function useUpdateCompanySettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: CompanySettingsUpdate) => companySettingsApi.update(data),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['companySettings'] }) },
   })
 }

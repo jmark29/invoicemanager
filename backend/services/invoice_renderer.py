@@ -36,11 +36,14 @@ def render_invoice_html(
     net_total: float,
     vat_amount: float,
     gross_total: float,
+    company: object | None = None,
 ) -> str:
     """Render an invoice to an HTML string.
 
     Args:
         items: list of dicts with keys ``position``, ``label``, ``amount`` (float).
+        company: Optional CompanySettings object; its attributes are passed to
+            the template as ``company.*`` variables.
     """
     env = _get_jinja_env()
     template = env.get_template("invoice.html")
@@ -66,6 +69,7 @@ def render_invoice_html(
         net_total=format_eur(net_total),
         vat_amount=format_eur(vat_amount),
         gross_total=format_eur(gross_total),
+        company=company,
     )
 
 

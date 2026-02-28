@@ -14,6 +14,8 @@
 | 1.7 | 2026-02-26 | Phase 8 completed |
 | 1.8 | 2026-02-26 | Phase 9 completed — quality & operational hardening (337 backend + 32 frontend tests) |
 | 1.9 | 2026-02-27 | Post-build: User Guide, Makefile, auto-seed on startup, DYLD_LIBRARY_PATH fix |
+| 2.0 | 2026-02-28 | Revision Sprint 1: bug fixes, document management, multi-client foundation |
+| 2.1 | 2026-02-28 | Revision Sprint 1 completed — all 13 tasks done (337 backend + 32 frontend tests) |
 
 ---
 
@@ -466,3 +468,72 @@ Phase 2 (working days + cost calculation) is the single most critical component 
 4. **PDF output:** Generate Jan 2025 invoice, compare visually to reference AR202501-02.docx
 5. **MCP tools:** Test each tool via `mcp dev`, verify query results match API
 6. **End-to-end:** Full workflow: import data -> generate invoice -> download PDF -> record payment -> dashboard shows correct status
+
+---
+
+## Revision Sprint 1 — Bug Fixes, Document Management & Multi-Client Foundation
+
+> **Date:** 2026-02-28
+> **Spec:** `docs/InvoiceManager-Revision-Sprint-1.md`
+
+### Context
+
+The app is functional but a manual UI review revealed bugs (umlaut encoding, 404 downloads), missing features (upload UI, PDF preview, import history), and architectural gaps (single-client assumption, hardcoded company data). This sprint addresses all of these.
+
+**Key scope decisions:**
+- Task 5 (Documents page) **dropped** — replaced with inline file management in existing sections + bank transaction dedup + import file history
+- Bank dedup: detect by booking_date + amount + description; prompt user for confirmation on duplicates
+- Import history: store uploaded XLSX files on disk + `import_history` table for audit trail
+- Company settings: new `company_settings` DB table (singleton) replaces hardcoded invoice template values
+
+### DB Migration (single migration for entire sprint)
+
+```
+alembic revision --autogenerate -m "sprint1_import_history_company_settings_client_fields"
+```
+
+Creates:
+1. `import_history` table (file_type, original_filename, stored_path, imported_at, record_count, skipped_count, notes)
+2. `company_settings` table (company_name, address, managing_director, tax/VAT IDs, bank details, contact info)
+3. 6 new nullable columns on `clients` table (country, vat_id, contact_person, email, payment_terms_days, notes)
+
+### Task List
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| 1 | Fix German umlaut encoding in ~15 frontend files | Critical | Done |
+| 2 | Fix document download 404 (copy PDFs, fix seed filenames) | Critical | Done |
+| 5b | Import file history (backend model/router + frontend display) | Medium | Done |
+| 5a | Bank import dedup with user confirmation | Medium | Done |
+| 6c | Company settings (DB table, router, template integration) | Medium | Done |
+| 6a | Clients page (model extension + frontend CRUD page) | Medium | Done |
+| 6b | Restructure Einstellungen (company data + client-scoped line items) | Medium | Done |
+| 6d | Client scoping wiring (dashboard, invoice generation, filters) | Medium | Done |
+| 3 | Upload UI for provider invoices (single + bulk) | High | Done |
+| 4 | PDF preview modal (iframe-based) | High | Done |
+| 7 | UX polish batch (7a-7h: formatting, tooltips, hover, edit mode, CRUD) | Low | Done |
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `backend/models/import_history.py` | ImportHistory model |
+| `backend/models/company_settings.py` | CompanySettings singleton model |
+| `backend/schemas/import_history.py` | Import history response schema |
+| `backend/schemas/company_settings.py` | Company settings response + update schemas |
+| `backend/routers/settings.py` | GET/PATCH /api/settings/company |
+| `frontend/src/pages/Clients.tsx` | Kunden page (list + detail/edit) |
+| `frontend/src/components/PDFPreviewModal.tsx` | Inline PDF preview modal |
+| `frontend/src/components/ConfirmDialog.tsx` | Reusable confirmation dialog |
+
+### New API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET/PATCH | `/api/settings/company` | Company/sender settings CRUD |
+| GET | `/api/bank-transactions/import-history` | Bank import history |
+| GET | `/api/upwork-transactions/import-history` | Upwork import history |
+
+### Sidebar Navigation (updated order)
+
+1. Dashboard, 2. Rechnungen, 3. Rechnung erstellen, 4. Abstimmung, 5. **Kunden** (new), 6. Kategorien, 7. Lieferantenrechnungen, 8. Bank, 9. Upwork, 10. Zahlungen, 11. Einstellungen

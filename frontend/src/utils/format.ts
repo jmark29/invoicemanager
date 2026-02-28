@@ -11,7 +11,7 @@ export function formatEur(amount: number): string {
   // German thousands separator (period)
   const withSep = intPart!.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
   const sign = rounded < 0 ? '-' : ''
-  return `${sign}${withSep},${decPart} \u20AC`
+  return `${sign}${withSep},${decPart} €`
 }
 
 /**
@@ -23,7 +23,7 @@ export function formatDateGerman(isoDate: string): string {
 }
 
 const MONTH_NAMES = [
-  '', 'Januar', 'Februar', 'M\u00E4rz', 'April', 'Mai', 'Juni',
+  '', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
   'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
 ] as const
 
@@ -51,10 +51,17 @@ export function todayISO(): string {
   return `${year}-${month}-${day}`
 }
 
+/** Last day of a given month as ISO date string YYYY-MM-DD */
+export function endOfMonthISO(year: number, month: number): string {
+  // Day 0 of next month = last day of current month
+  const lastDay = new Date(year, month, 0).getDate()
+  return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+}
+
 /** Status label and Tailwind classes */
 export const STATUS_CONFIG: Record<InvoiceStatus, { label: string; color: string }> = {
   draft:   { label: 'Entwurf',     color: 'bg-gray-100 text-gray-700' },
   sent:    { label: 'Versendet',   color: 'bg-blue-100 text-blue-700' },
   paid:    { label: 'Bezahlt',     color: 'bg-green-100 text-green-700' },
-  overdue: { label: '\u00DCberf\u00E4llig', color: 'bg-red-100 text-red-700' },
+  overdue: { label: 'Überfällig', color: 'bg-red-100 text-red-700' },
 }

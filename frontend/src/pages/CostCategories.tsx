@@ -11,7 +11,7 @@ const columns: Column<CostCategory>[] = [
   { key: 'provider_name', header: 'Anbieter', render: (r) => r.provider_name ?? '-' },
   { key: 'cost_type', header: 'Kostentyp' },
   { key: 'billing_cycle', header: 'Abrechnungszyklus' },
-  { key: 'currency', header: 'W\u00E4hrung' },
+  { key: 'currency', header: 'Währung' },
   {
     key: 'active',
     header: 'Aktiv',

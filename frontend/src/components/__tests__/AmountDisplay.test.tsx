@@ -5,17 +5,17 @@ import { AmountDisplay } from '../AmountDisplay'
 describe('AmountDisplay', () => {
   it('renders a formatted EUR amount', () => {
     render(<AmountDisplay amount={1234.56} />)
-    expect(screen.getByText('1.234,56 \u20AC')).toBeInTheDocument()
+    expect(screen.getByText('1.234,56 €')).toBeInTheDocument()
   })
 
   it('renders zero amount', () => {
     render(<AmountDisplay amount={0} />)
-    expect(screen.getByText('0,00 \u20AC')).toBeInTheDocument()
+    expect(screen.getByText('0,00 €')).toBeInTheDocument()
   })
 
   it('renders negative amount', () => {
     render(<AmountDisplay amount={-500} />)
-    expect(screen.getByText('-500,00 \u20AC')).toBeInTheDocument()
+    expect(screen.getByText('-500,00 €')).toBeInTheDocument()
   })
 
   it('applies custom className', () => {

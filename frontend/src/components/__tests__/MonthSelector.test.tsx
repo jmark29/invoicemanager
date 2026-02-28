@@ -33,7 +33,7 @@ describe('MonthSelector', () => {
     const onChange = vi.fn()
     render(<MonthSelector year={2025} month={6} onChange={onChange} />)
 
-    await user.click(screen.getByLabelText('N\u00E4chster Monat'))
+    await user.click(screen.getByLabelText('Nächster Monat'))
     expect(onChange).toHaveBeenCalledWith(2025, 7)
   })
 
@@ -42,7 +42,7 @@ describe('MonthSelector', () => {
     const onChange = vi.fn()
     render(<MonthSelector year={2025} month={12} onChange={onChange} />)
 
-    await user.click(screen.getByLabelText('N\u00E4chster Monat'))
+    await user.click(screen.getByLabelText('Nächster Monat'))
     expect(onChange).toHaveBeenCalledWith(2026, 1)
   })
 })

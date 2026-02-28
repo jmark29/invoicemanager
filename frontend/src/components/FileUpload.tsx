@@ -7,7 +7,7 @@ interface Props {
   disabled?: boolean
 }
 
-export function FileUpload({ accept, onFile, label = 'Datei ausw\u00E4hlen oder hierher ziehen', disabled = false }: Props) {
+export function FileUpload({ accept, onFile, label = 'Datei auswählen oder hierher ziehen', disabled = false }: Props) {
   const [dragOver, setDragOver] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)

@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MonthSelector } from '@/components/MonthSelector'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import { StatusBadge } from '@/components/StatusBadge'
 import { PageHeader } from '@/components/PageHeader'
 import { ErrorAlert } from '@/components/ErrorAlert'
-import { useInvoices, useDashboardOpenInvoices, useDashboardReconciliation } from '@/hooks/useApi'
+import { useInvoices, useClients, useDashboardOpenInvoices, useDashboardReconciliation } from '@/hooks/useApi'
 import { formatMonthYear, formatDateGerman } from '@/utils/format'
 import type { InvoiceStatus } from '@/types/api'
 
@@ -13,10 +13,35 @@ export function Dashboard() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
+  const [clientId, setClientId] = useState<string | undefined>(undefined)
 
-  const { data: invoices, isLoading, isError, error, refetch } = useInvoices({ year })
+  const { data: clients } = useClients()
+  const { data: invoices, isLoading, isError, error, refetch } = useInvoices({ year, client_id: clientId })
   const { data: openInvoices } = useDashboardOpenInvoices()
   const { data: reconciliation } = useDashboardReconciliation(year, month)
+
+  // Smart default: if current month has no invoices, jump to most recent month with data
+  const [autoJumped, setAutoJumped] = useState(false)
+  useEffect(() => {
+    if (invoices && !autoJumped) {
+      const currentMonthHasData = invoices.some(
+        (inv) => inv.period_year === year && inv.period_month === month,
+      )
+      if (!currentMonthHasData && invoices.length > 0) {
+        // Find most recent month with invoices
+        const sorted = [...invoices].sort((a, b) => {
+          if (a.period_year !== b.period_year) return b.period_year - a.period_year
+          return b.period_month - a.period_month
+        })
+        const latest = sorted[0]
+        if (latest) {
+          setYear(latest.period_year)
+          setMonth(latest.period_month)
+        }
+      }
+      setAutoJumped(true)
+    }
+  }, [invoices, autoJumped, year, month])
 
   const monthInvoices = invoices?.filter(
     (inv) => inv.period_year === year && inv.period_month === month,
@@ -49,11 +74,26 @@ export function Dashboard() {
         }
       />
 
-      <MonthSelector
-        year={year}
-        month={month}
-        onChange={(y, m) => { setYear(y); setMonth(m) }}
-      />
+      <div className="flex flex-wrap items-end gap-4">
+        <MonthSelector
+          year={year}
+          month={month}
+          onChange={(y, m) => { setYear(y); setMonth(m) }}
+        />
+        {clients && clients.length > 1 && (
+          <select
+            value={clientId ?? ''}
+            onChange={(e) => setClientId(e.target.value || undefined)}
+            title="Kunde filtern"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          >
+            <option value="">Alle Kunden</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        )}
+      </div>
 
       {isError && <ErrorAlert error={error} onRetry={() => void refetch()} />}
 
@@ -113,7 +153,7 @@ export function Dashboard() {
           <p className="text-sm text-gray-500">Laden...</p>
         ) : monthInvoices.length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-            Keine Rechnungen f\u00FCr diesen Monat.{' '}
+            Keine Rechnungen für diesen Monat.{' '}
             <Link to="/invoices/generate" className="text-blue-600 hover:underline">
               Jetzt erstellen
             </Link>

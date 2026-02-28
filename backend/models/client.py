@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, Float, String
+from sqlalchemy import Boolean, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.models.base import Base
@@ -20,6 +20,12 @@ class Client(Base):
     address_line1: Mapped[str] = mapped_column(String)
     address_line2: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     zip_city: Mapped[str] = mapped_column(String)
+    country: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="Deutschland")
+    vat_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    contact_person: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    email: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    payment_terms_days: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=14)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     vat_rate: Mapped[float] = mapped_column(Float, default=0.19)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
 

@@ -38,8 +38,15 @@ class BankTransactionResponse(BankTransactionBase):
     model_config = {"from_attributes": True}
 
 
+class PotentialDuplicateItem(BaseModel):
+    booking_date: date
+    amount_eur: float
+    description: str
+
+
 class BankImportResponse(BaseModel):
     imported: int
     skipped_duplicate: int
     auto_matched: int
+    potential_duplicates: list[PotentialDuplicateItem] = []
     errors: list[str]

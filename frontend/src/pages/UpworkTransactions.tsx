@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { FileUpload } from '@/components/FileUpload'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import { ErrorAlert } from '@/components/ErrorAlert'
-import { useUpworkTransactions, useCostCategories, useImportUpworkXlsx } from '@/hooks/useApi'
+import { useUpworkTransactions, useCostCategories, useImportUpworkXlsx, useUpworkImportHistory } from '@/hooks/useApi'
 import { formatDateGerman } from '@/utils/format'
 import type { UpworkImportResponse } from '@/types/api'
 
@@ -11,12 +11,14 @@ export function UpworkTransactions() {
   const [monthFilter, setMonthFilter] = useState<string | undefined>(undefined)
   const [importCategoryId, setImportCategoryId] = useState<string | undefined>(undefined)
   const [importResult, setImportResult] = useState<UpworkImportResponse | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
 
   const { data: transactions, isLoading, isError, error, refetch } = useUpworkTransactions({
     assigned_month: monthFilter,
   })
   const { data: categories } = useCostCategories()
   const importMutation = useImportUpworkXlsx()
+  const { data: importHistory } = useUpworkImportHistory()
 
   const handleImport = async (file: File) => {
     try {
@@ -42,7 +44,7 @@ export function UpworkTransactions() {
       <div className="mb-6">
         <h2 className="mb-2 text-sm font-semibold text-gray-700">XLSX Import</h2>
         <div className="mb-2">
-          <label className="text-xs font-medium text-gray-600">Kategorie f\u00FCr Import (optional)</label>
+          <label className="text-xs font-medium text-gray-600">Kategorie für Import (optional)</label>
           <select
             value={importCategoryId ?? ''}
             onChange={(e) => setImportCategoryId(e.target.value || undefined)}
@@ -72,6 +74,49 @@ export function UpworkTransactions() {
           </div>
         )}
       </div>
+
+      {/* Import History */}
+      {importHistory && importHistory.length > 0 && (
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-sm font-semibold text-gray-700 hover:text-blue-600"
+          >
+            Import-Verlauf ({importHistory.length}) {showHistory ? '▲' : '▼'}
+          </button>
+          {showHistory && (
+            <div className="mt-2 overflow-x-auto rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-gray-600">Datum</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-600">Datei</th>
+                    <th className="px-4 py-2 text-right font-medium text-gray-600">Importiert</th>
+                    <th className="px-4 py-2 text-right font-medium text-gray-600">Übersprungen</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-600">Hinweise</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {importHistory.map((h) => (
+                    <tr key={h.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 whitespace-nowrap">
+                        {new Date(h.imported_at).toLocaleString('de-DE')}
+                      </td>
+                      <td className="px-4 py-2">{h.original_filename}</td>
+                      <td className="px-4 py-2 text-right">{h.record_count}</td>
+                      <td className="px-4 py-2 text-right">{h.skipped_count}</td>
+                      <td className="px-4 py-2 text-xs text-gray-500 max-w-xs truncate" title={h.notes ?? ''}>
+                        {h.notes ?? '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Month summary */}
       {Object.keys(monthTotals).length > 0 && (

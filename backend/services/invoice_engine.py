@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from backend.config import settings
 from backend.models.client import Client
+from backend.models.company_settings import CompanySettings
 from backend.models.generated_invoice import GeneratedInvoice, GeneratedInvoiceItem
 from backend.services.cost_calculation import InvoicePreview, resolve_line_items
 from backend.services.formatting import (
@@ -108,7 +109,14 @@ def generate_invoice(
         preview.vat_amount = float(vat)
         preview.gross_total = float(gross)
 
-    # 4. Render HTML
+    # 4. Load company settings
+    company = db.get(CompanySettings, 1)
+    if not company:
+        company = CompanySettings(id=1)
+        db.add(company)
+        db.flush()
+
+    # 5. Render HTML
     items_for_render = [
         {"position": item.position, "label": item.label, "amount": item.amount}
         for item in preview.items
@@ -126,9 +134,10 @@ def generate_invoice(
         net_total=preview.net_total,
         vat_amount=preview.vat_amount,
         gross_total=preview.gross_total,
+        company=company,
     )
 
-    # 5. Render PDF
+    # 6. Render PDF
     fname = invoice_filename(year, month, client.client_number)
     year_dir = settings.GENERATED_DIR / str(year)
     pdf_path = year_dir / fname
@@ -137,7 +146,7 @@ def generate_invoice(
     # Relative path for DB storage
     relative_pdf_path = f"generated/{year}/{fname}"
 
-    # 6. Persist invoice record
+    # 7. Persist invoice record
     invoice = GeneratedInvoice(
         client_id=client_id,
         invoice_number=invoice_number,
@@ -156,7 +165,7 @@ def generate_invoice(
     db.add(invoice)
     db.flush()  # get the id
 
-    # 7. Persist line items with traceability links
+    # 8. Persist line items with traceability links
     for item in preview.items:
         inv_item = GeneratedInvoiceItem(
             invoice_id=invoice.id,

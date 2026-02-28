@@ -59,7 +59,7 @@ export function DataTable<T>({ columns, data, keyFn, onRowClick, emptyMessage = 
               >
                 {col.header}
                 {sortKey === col.key && (
-                  <span className="ml-1">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>
+                  <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
                 )}
               </th>
             ))}

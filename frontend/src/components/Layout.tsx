@@ -2,16 +2,17 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: '\u2302' },
-  { to: '/invoices', label: 'Rechnungen', icon: '\uD83D\uDCC4' },
-  { to: '/invoices/generate', label: 'Rechnung erstellen', icon: '\u002B' },
-  { to: '/reconciliation', label: 'Abstimmung', icon: '\u2696' },
-  { to: '/categories', label: 'Kategorien', icon: '\u2630' },
-  { to: '/provider-invoices', label: 'Lieferantenrechnungen', icon: '\uD83D\uDCE5' },
-  { to: '/bank-transactions', label: 'Bank', icon: '\uD83C\uDFE6' },
-  { to: '/upwork-transactions', label: 'Upwork', icon: '\uD83D\uDCBB' },
-  { to: '/payments', label: 'Zahlungen', icon: '\u20AC' },
-  { to: '/settings', label: 'Einstellungen', icon: '\u2699' },
+  { to: '/', label: 'Dashboard', icon: '⌂' },
+  { to: '/invoices', label: 'Rechnungen', icon: '📄' },
+  { to: '/invoices/generate', label: 'Rechnung erstellen', icon: '+' },
+  { to: '/reconciliation', label: 'Abstimmung', icon: '⚖' },
+  { to: '/clients', label: 'Kunden', icon: '👤' },
+  { to: '/categories', label: 'Kategorien', icon: '☰' },
+  { to: '/provider-invoices', label: 'Lieferantenrechnungen', icon: '📥' },
+  { to: '/bank-transactions', label: 'Bank', icon: '🏦' },
+  { to: '/upwork-transactions', label: 'Upwork', icon: '💻' },
+  { to: '/payments', label: 'Zahlungen', icon: '€' },
+  { to: '/settings', label: 'Einstellungen', icon: '⚙' },
 ] as const
 
 export function Layout() {

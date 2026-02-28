@@ -76,7 +76,7 @@ export function Payments() {
                 onChange={(e) => setClientId(e.target.value)}
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
               >
-                <option value="">-- W\u00E4hlen --</option>
+                <option value="">-- Wählen --</option>
                 {clients?.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -188,7 +188,7 @@ export function Payments() {
                       onClick={() => setDeleteId(p.id)}
                       className="text-xs text-red-600 hover:underline"
                     >
-                      L\u00F6schen
+                      Löschen
                     </button>
                   </td>
                 </tr>
@@ -200,11 +200,11 @@ export function Payments() {
 
       <ConfirmDialog
         open={deleteId !== null}
-        title="Zahlung l\u00F6schen"
-        message="M\u00F6chten Sie diese Zahlung wirklich l\u00F6schen?"
+        title="Zahlung löschen"
+        message="Möchten Sie diese Zahlung wirklich löschen?"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
-        confirmLabel="L\u00F6schen"
+        confirmLabel="Löschen"
       />
     </div>
   )

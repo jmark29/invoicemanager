@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import { ErrorAlert } from '@/components/ErrorAlert'
+import { PDFPreviewModal } from '@/components/PDFPreviewModal'
 import { useInvoices, useClients, useUpdateInvoiceStatus } from '@/hooks/useApi'
 import { formatDateGerman, formatMonthYear } from '@/utils/format'
 import type { InvoiceStatus } from '@/types/api'
@@ -23,6 +24,7 @@ export function InvoiceList() {
   })
   const { data: clients } = useClients()
   const statusMutation = useUpdateInvoiceStatus()
+  const [previewInv, setPreviewInv] = useState<{ id: number; label: string } | null>(null)
 
   const handleStatusChange = (invoiceId: number, newStatus: InvoiceStatus) => {
     statusMutation.mutate({
@@ -53,6 +55,7 @@ export function InvoiceList() {
         <select
           value={yearFilter ?? ''}
           onChange={(e) => setYearFilter(e.target.value ? Number(e.target.value) : undefined)}
+          title="Jahr filtern"
           className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
         >
           <option value="">Alle Jahre</option>
@@ -64,6 +67,7 @@ export function InvoiceList() {
         <select
           value={statusFilter ?? ''}
           onChange={(e) => setStatusFilter(e.target.value || undefined)}
+          title="Status filtern"
           className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
         >
           <option value="">Alle Status</option>
@@ -75,6 +79,7 @@ export function InvoiceList() {
         <select
           value={clientFilter ?? ''}
           onChange={(e) => setClientFilter(e.target.value || undefined)}
+          title="Kunde filtern"
           className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
         >
           <option value="">Alle Kunden</option>
@@ -132,17 +137,17 @@ export function InvoiceList() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <a
-                        href={`/api/invoices/${inv.id}/download`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => setPreviewInv({ id: inv.id, label: inv.invoice_number })}
                         className="text-xs text-blue-600 hover:underline"
                       >
                         PDF
-                      </a>
+                      </button>
                       <select
                         value={inv.status}
                         onChange={(e) => handleStatusChange(inv.id, e.target.value as InvoiceStatus)}
+                        title="Status ändern"
                         className="rounded border border-gray-300 px-1.5 py-0.5 text-xs"
                       >
                         {STATUSES.map((s) => (
@@ -156,6 +161,14 @@ export function InvoiceList() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {previewInv && (
+        <PDFPreviewModal
+          url={`/api/invoices/${previewInv.id}/download`}
+          title={`Rechnung ${previewInv.label}`}
+          onClose={() => setPreviewInv(null)}
+        />
       )}
     </div>
   )

@@ -5,6 +5,7 @@ import { AmountDisplay } from '@/components/AmountDisplay'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { PDFPreviewModal } from '@/components/PDFPreviewModal'
 import { useInvoice, useUpdateInvoiceStatus, usePayments, useRegenerateInvoice } from '@/hooks/useApi'
 import { formatDateGerman, formatMonthYear } from '@/utils/format'
 import type { InvoiceStatus } from '@/types/api'
@@ -19,6 +20,7 @@ export function InvoiceDetail() {
   const statusMutation = useUpdateInvoiceStatus()
   const regenerateMutation = useRegenerateInvoice()
   const [showRegenConfirm, setShowRegenConfirm] = useState(false)
+  const [showPreview, setShowPreview] = useState(false)
 
   if (isLoading) return <p className="text-sm text-gray-500">Laden...</p>
   if (isError) return <ErrorAlert error={error} onRetry={() => void refetch()} />
@@ -60,11 +62,18 @@ export function InvoiceDetail() {
                 {regenerateMutation.isPending ? 'Generiere...' : 'Neu generieren'}
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              PDF Vorschau
+            </button>
             <a
               href={`/api/invoices/${invoiceId}/download`}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               PDF herunterladen
             </a>
@@ -72,7 +81,7 @@ export function InvoiceDetail() {
               to="/invoices"
               className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Zur\u00FCck
+              Zurück
             </Link>
           </div>
         }
@@ -90,6 +99,7 @@ export function InvoiceDetail() {
               <select
                 value={invoice.status}
                 onChange={(e) => handleStatusChange(e.target.value as InvoiceStatus)}
+                title="Status ändern"
                 className="rounded border border-gray-300 px-1.5 py-0.5 text-xs"
               >
                 {STATUSES.map((s) => (
@@ -203,6 +213,14 @@ export function InvoiceDetail() {
         onCancel={() => setShowRegenConfirm(false)}
         confirmLabel="Neu generieren"
       />
+
+      {showPreview && (
+        <PDFPreviewModal
+          url={`/api/invoices/${invoiceId}/download`}
+          title={`Rechnung ${invoice.invoice_number}`}
+          onClose={() => setShowPreview(false)}
+        />
+      )}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Dashboard } from '@/pages/Dashboard'
 import { InvoiceList } from '@/pages/InvoiceList'
 import { InvoiceGenerate } from '@/pages/InvoiceGenerate'
 import { InvoiceDetail } from '@/pages/InvoiceDetail'
+import { ClientList, ClientDetail } from '@/pages/Clients'
 import { CostCategories } from '@/pages/CostCategories'
 import { CostCategoryDetail } from '@/pages/CostCategoryDetail'
 import { ProviderInvoices } from '@/pages/ProviderInvoices'
@@ -22,13 +23,15 @@ export const router = createBrowserRouter([
       { path: 'invoices', element: <InvoiceList /> },
       { path: 'invoices/generate', element: <InvoiceGenerate /> },
       { path: 'invoices/:id', element: <InvoiceDetail /> },
+      { path: 'reconciliation', element: <Reconciliation /> },
+      { path: 'clients', element: <ClientList /> },
+      { path: 'clients/:id', element: <ClientDetail /> },
       { path: 'categories', element: <CostCategories /> },
       { path: 'categories/:id', element: <CostCategoryDetail /> },
       { path: 'provider-invoices', element: <ProviderInvoices /> },
       { path: 'bank-transactions', element: <BankTransactions /> },
       { path: 'upwork-transactions', element: <UpworkTransactions /> },
       { path: 'payments', element: <Payments /> },
-      { path: 'reconciliation', element: <Reconciliation /> },
       { path: 'settings', element: <Settings /> },
       { path: '*', element: <NotFound /> },
     ],

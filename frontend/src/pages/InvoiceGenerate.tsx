@@ -4,7 +4,7 @@ import { MonthSelector } from '@/components/MonthSelector'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import { PageHeader } from '@/components/PageHeader'
 import { useClients, useInvoicePreview, useGenerateInvoice } from '@/hooks/useApi'
-import { invoiceNumber, todayISO, formatEur } from '@/utils/format'
+import { invoiceNumber, endOfMonthISO, formatEur } from '@/utils/format'
 import type { InvoicePreviewResponse } from '@/types/api'
 
 export function InvoiceGenerate() {
@@ -16,7 +16,7 @@ export function InvoiceGenerate() {
   const [preview, setPreview] = useState<InvoicePreviewResponse | null>(null)
   const [overrides, setOverrides] = useState<Record<number, number>>({})
   const [invNumber, setInvNumber] = useState('')
-  const [invDate, setInvDate] = useState(todayISO())
+  const [invDate, setInvDate] = useState(endOfMonthISO(year, month))
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [generated, setGenerated] = useState<{ id: number; filename: string } | null>(null)
@@ -101,7 +101,7 @@ export function InvoiceGenerate() {
           <MonthSelector
             year={year}
             month={month}
-            onChange={(y, m) => { setYear(y); setMonth(m); setPreview(null); setGenerated(null) }}
+            onChange={(y, m) => { setYear(y); setMonth(m); setInvDate(endOfMonthISO(y, m)); setPreview(null); setGenerated(null) }}
           />
           <div>
             <label className="block text-xs font-medium text-gray-600">Kunde</label>
@@ -110,7 +110,7 @@ export function InvoiceGenerate() {
               onChange={(e) => { setClientId(e.target.value); setPreview(null); setGenerated(null) }}
               className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
             >
-              <option value="">-- Kunde w\u00E4hlen --</option>
+              <option value="">-- Kunde wählen --</option>
               {clients?.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -135,7 +135,7 @@ export function InvoiceGenerate() {
       {/* Step 2: Preview with editable amounts */}
       {preview && !generated && (
         <div className="mt-6 rounded-lg border border-gray-200 bg-white p-5">
-          <h2 className="mb-4 text-sm font-semibold text-gray-700">2. Positionen pr\u00FCfen</h2>
+          <h2 className="mb-4 text-sm font-semibold text-gray-700">2. Positionen prüfen</h2>
 
           {preview.warnings.length > 0 && (
             <div className="mb-4 rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
@@ -150,7 +150,7 @@ export function InvoiceGenerate() {
                 <th className="px-3 py-2 font-medium text-gray-600">Bezeichnung</th>
                 <th className="w-20 px-3 py-2 font-medium text-gray-600">Typ</th>
                 <th className="w-40 px-3 py-2 text-right font-medium text-gray-600">Betrag (auto)</th>
-                <th className="w-40 px-3 py-2 text-right font-medium text-gray-600">Betrag (\u00FCberschreiben)</th>
+                <th className="w-40 px-3 py-2 text-right font-medium text-gray-600">Betrag (überschreiben)</th>
               </tr>
             </thead>
             <tbody>
@@ -161,7 +161,7 @@ export function InvoiceGenerate() {
                     {item.label}
                     {item.warnings.length > 0 && (
                       <span className="ml-2 text-xs text-yellow-600" title={item.warnings.join(', ')}>
-                        \u26A0
+                        ⚠
                       </span>
                     )}
                   </td>

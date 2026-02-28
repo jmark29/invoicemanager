@@ -7,7 +7,7 @@ interface Props {
   confirmLabel?: string
 }
 
-export function ConfirmDialog({ open, title, message, onConfirm, onCancel, confirmLabel = 'Best\u00E4tigen' }: Props) {
+export function ConfirmDialog({ open, title, message, onConfirm, onCancel, confirmLabel = 'Bestätigen' }: Props) {
   if (!open) return null
 
   return (

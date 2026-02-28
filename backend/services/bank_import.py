@@ -45,6 +45,15 @@ class ParsedBankTransaction:
 
 
 @dataclass
+class PotentialDuplicate:
+    """A transaction that was identified as a potential duplicate."""
+
+    booking_date: date
+    amount_eur: float
+    description: str
+
+
+@dataclass
 class BankImportResult:
     """Result of a bank statement XLSX import operation."""
 
@@ -52,6 +61,7 @@ class BankImportResult:
     skipped_duplicate: int = 0
     auto_matched: int = 0
     transactions: list[ParsedBankTransaction] = field(default_factory=list)
+    potential_duplicates: list[PotentialDuplicate] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
 
@@ -176,11 +186,13 @@ def parse_bank_xlsx(file_path: str) -> BankImportResult:
 def import_bank_transactions(
     file_path: str,
     db: Session,
+    force_import_all: bool = False,
 ) -> BankImportResult:
     """Parse bank statement XLSX and import transactions into the database.
 
     Auto-matches categories by bank_keywords. Skips duplicates based on
-    (booking_date, amount_eur, description) combination.
+    (booking_date, amount_eur, description) combination unless
+    ``force_import_all`` is True, in which case duplicates are imported anyway.
     """
     result = parse_bank_xlsx(file_path)
 
@@ -204,8 +216,15 @@ def import_bank_transactions(
     for tx in result.transactions:
         # Duplicate check
         key = (tx.booking_date, tx.amount_eur, tx.description)
-        if key in existing_set:
+        if key in existing_set and not force_import_all:
             result.skipped_duplicate += 1
+            result.potential_duplicates.append(
+                PotentialDuplicate(
+                    booking_date=tx.booking_date,
+                    amount_eur=tx.amount_eur,
+                    description=tx.description,
+                )
+            )
             continue
 
         # Auto-match category

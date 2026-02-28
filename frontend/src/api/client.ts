@@ -5,6 +5,8 @@ import type {
   ProviderInvoice, ProviderInvoiceCreate, ProviderInvoiceUpdate,
   BankTransaction, BankTransactionCreate, BankTransactionUpdate, BankImportResponse,
   UpworkTransaction, UpworkTransactionUpdate, UpworkImportResponse,
+  ImportHistoryItem,
+  CompanySettings, CompanySettingsUpdate,
   PaymentReceipt, PaymentReceiptCreate, PaymentReceiptUpdate,
   GeneratedInvoice, GeneratedInvoiceListItem,
   InvoicePreviewRequest, InvoicePreviewResponse,
@@ -121,8 +123,14 @@ export const bankTransactionsApi = {
     apiFetch<BankTransaction>('/api/bank-transactions', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: BankTransactionUpdate) =>
     apiFetch<BankTransaction>(`/api/bank-transactions/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-  importXlsx: (file: File) =>
-    apiUpload<BankImportResponse>('/api/bank-transactions/import', file),
+  importXlsx: (file: File, forceImportAll = false) =>
+    apiUpload<BankImportResponse>(
+      '/api/bank-transactions/import',
+      file,
+      forceImportAll ? { force_import_all: 'true' } : undefined,
+    ),
+  importHistory: () =>
+    apiFetch<ImportHistoryItem[]>('/api/bank-transactions/import-history'),
 }
 
 // ── Upwork Transactions ────────────────────────────────────────
@@ -140,6 +148,8 @@ export const upworkTransactionsApi = {
       file,
       categoryId ? { category_id: categoryId } : undefined,
     ),
+  importHistory: () =>
+    apiFetch<ImportHistoryItem[]>('/api/upwork-transactions/import-history'),
 }
 
 // ── Invoices (Generated) ──────────────────────────────────────
@@ -191,6 +201,15 @@ export const dashboardApi = {
     apiFetch<OpenInvoicesData>('/api/dashboard/open-invoices'),
   reconciliation: (year: number, month: number) =>
     apiFetch<ReconciliationData>(`/api/dashboard/reconciliation/${year}/${month}`),
+}
+
+// ── Company Settings ──────────────────────────────────────────
+
+export const companySettingsApi = {
+  get: () =>
+    apiFetch<CompanySettings>('/api/settings/company'),
+  update: (data: CompanySettingsUpdate) =>
+    apiFetch<CompanySettings>('/api/settings/company', { method: 'PATCH', body: JSON.stringify(data) }),
 }
 
 // ── Health ─────────────────────────────────────────────────────

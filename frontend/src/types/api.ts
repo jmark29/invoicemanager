@@ -9,6 +9,12 @@ export interface Client {
   address_line1: string
   address_line2: string | null
   zip_city: string
+  country: string | null
+  vat_id: string | null
+  contact_person: string | null
+  email: string | null
+  payment_terms_days: number | null
+  notes: string | null
   vat_rate: number
   active: boolean
 }
@@ -20,6 +26,12 @@ export interface ClientCreate {
   address_line1: string
   address_line2?: string | null
   zip_city: string
+  country?: string | null
+  vat_id?: string | null
+  contact_person?: string | null
+  email?: string | null
+  payment_terms_days?: number | null
+  notes?: string | null
   vat_rate?: number
   active?: boolean
 }
@@ -30,6 +42,12 @@ export interface ClientUpdate {
   address_line1?: string
   address_line2?: string | null
   zip_city?: string
+  country?: string | null
+  vat_id?: string | null
+  contact_person?: string | null
+  email?: string | null
+  payment_terms_days?: number | null
+  notes?: string | null
   vat_rate?: number
   active?: boolean
 }
@@ -217,10 +235,17 @@ export interface BankTransactionUpdate {
   notes?: string | null
 }
 
+export interface PotentialDuplicateItem {
+  booking_date: string
+  amount_eur: number
+  description: string
+}
+
 export interface BankImportResponse {
   imported: number
   skipped_duplicate: number
   auto_matched: number
+  potential_duplicates: PotentialDuplicateItem[]
   errors: string[]
 }
 
@@ -451,6 +476,58 @@ export interface ReconciliationData {
   unmatched_count: number
   unmatched_bank_transactions: UnmatchedBankTx[]
   invoice_status: InvoicePaymentStatus | null
+}
+
+// ── Company Settings ──────────────────────────────────────────
+
+export interface CompanySettings {
+  id: number
+  company_name: string
+  address_line1: string
+  address_line2: string | null
+  zip_city: string
+  managing_director: string | null
+  tax_number: string | null
+  vat_id: string | null
+  bank_name: string | null
+  iban: string | null
+  bic: string | null
+  email: string | null
+  phone: string | null
+  fax: string | null
+  website: string | null
+  register_info: string | null
+}
+
+export interface CompanySettingsUpdate {
+  company_name?: string
+  address_line1?: string
+  address_line2?: string | null
+  zip_city?: string
+  managing_director?: string | null
+  tax_number?: string | null
+  vat_id?: string | null
+  bank_name?: string | null
+  iban?: string | null
+  bic?: string | null
+  email?: string | null
+  phone?: string | null
+  fax?: string | null
+  website?: string | null
+  register_info?: string | null
+}
+
+// ── Import History ─────────────────────────────────────────────
+
+export interface ImportHistoryItem {
+  id: number
+  file_type: string
+  original_filename: string
+  stored_path: string | null
+  imported_at: string
+  record_count: number
+  skipped_count: number
+  notes: string | null
 }
 
 // ── Working Days ───────────────────────────────────────────────
