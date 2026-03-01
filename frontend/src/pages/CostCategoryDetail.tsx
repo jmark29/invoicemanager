@@ -205,7 +205,7 @@ export function CostCategoryDetail() {
                   <tr key={inv.id}>
                     <td className="px-4 py-2">{inv.invoice_number}</td>
                     <td className="px-4 py-2 text-gray-600">{formatDateGerman(inv.invoice_date)}</td>
-                    <td className="px-4 py-2 text-right"><AmountDisplay amount={inv.amount} /></td>
+                    <td className="px-4 py-2 text-right"><AmountDisplay amount={inv.amount} currency={category.currency} /></td>
                     <td className="px-4 py-2 text-gray-600">{inv.assigned_month ?? '-'}</td>
                     <td className="px-4 py-2">
                       <input
@@ -338,7 +338,7 @@ function CostBreakdown({ invoices, currency }: { invoices: { invoice_number: str
               <tr key={inv.invoice_number} className="hover:bg-gray-50">
                 <td className="px-4 py-2 font-medium">{inv.invoice_number}</td>
                 <td className="px-4 py-2 text-gray-600">{inv.assigned_month ?? '-'}</td>
-                <td className="px-4 py-2 text-right"><AmountDisplay amount={inv.amount} /></td>
+                <td className="px-4 py-2 text-right"><AmountDisplay amount={inv.amount} currency={isForeign ? currency : undefined} /></td>
                 <td className="px-4 py-2 text-right"><AmountDisplay amount={inv.amount_eur ?? 0} /></td>
                 {isForeign && (
                   <td className="px-4 py-2 text-right text-gray-500">
@@ -355,7 +355,7 @@ function CostBreakdown({ invoices, currency }: { invoices: { invoice_number: str
             <tr>
               <td className="px-4 py-2">Gesamt</td>
               <td className="px-4 py-2">{matched.length} Rechnungen</td>
-              <td className="px-4 py-2 text-right"><AmountDisplay amount={totalOriginal} /></td>
+              <td className="px-4 py-2 text-right"><AmountDisplay amount={totalOriginal} currency={isForeign ? currency : undefined} /></td>
               <td className="px-4 py-2 text-right"><AmountDisplay amount={totalEur} /></td>
               {isForeign && (
                 <td className="px-4 py-2 text-right text-gray-500">

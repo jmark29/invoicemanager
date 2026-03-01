@@ -5,6 +5,7 @@ import { ErrorAlert } from '@/components/ErrorAlert'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { PDFPreviewModal } from '@/components/PDFPreviewModal'
 import { BulkUploadZone } from '@/components/BulkUploadZone'
+import { Upload, Download, Eye, RefreshCw, Pencil, Trash2 } from 'lucide-react'
 import {
   useProviderInvoices, useCostCategories,
   useUploadProviderInvoicePdf, useCreateProviderInvoice,
@@ -279,26 +280,13 @@ export function ProviderInvoices() {
                 <th className="px-4 py-3 text-right font-medium text-gray-600">Betrag</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Währung</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Zugeordnet</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-600">PDF</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-600">Aktionen</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {invoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium">
-                    {inv.file_path ? (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewInv({ id: inv.id, label: inv.invoice_number })}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {inv.invoice_number}
-                      </button>
-                    ) : (
-                      inv.invoice_number
-                    )}
-                  </td>
+                  <td className="px-4 py-3 font-medium">{inv.invoice_number}</td>
                   <td className="px-4 py-3 text-gray-600">{inv.category_id}</td>
                   <td className="px-4 py-3 text-gray-600">{formatDateGerman(inv.invoice_date)}</td>
                   <td className="px-4 py-3 text-right"><AmountDisplay amount={inv.amount} currency={inv.currency} /></td>
@@ -317,51 +305,60 @@ export function ProviderInvoices() {
                       }}
                       className="hidden"
                     />
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {inv.file_path ? (
                         <>
                           <a
                             href={`/api/provider-invoices/${inv.id}/download`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline"
+                            download
+                            title="PDF herunterladen"
+                            className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
                           >
-                            Download
+                            <Download size={16} />
                           </a>
                           <button
                             type="button"
-                            onClick={() => fileInputRefs.current[inv.id]?.click()}
-                            className="text-xs text-gray-500 hover:underline"
+                            title="Vorschau"
+                            onClick={() => setPreviewInv({ id: inv.id, label: inv.invoice_number })}
+                            className="p-1 text-gray-600 hover:text-gray-800 cursor-pointer"
                           >
-                            Ersetzen
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            title="PDF ersetzen"
+                            onClick={() => fileInputRefs.current[inv.id]?.click()}
+                            className="p-1 text-gray-500 hover:text-gray-700 cursor-pointer"
+                          >
+                            <RefreshCw size={16} />
                           </button>
                         </>
                       ) : (
                         <button
                           type="button"
+                          title="PDF hochladen"
                           onClick={() => fileInputRefs.current[inv.id]?.click()}
-                          className="text-xs text-blue-600 hover:underline"
+                          className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
                         >
-                          Hochladen
+                          <Upload size={16} />
                         </button>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                      <span className="mx-0.5 border-l border-gray-200 self-stretch" />
                       <button
                         type="button"
+                        title="Bearbeiten"
                         onClick={() => startEdit(inv)}
-                        className="text-xs text-blue-600 hover:underline"
+                        className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
                       >
-                        Bearbeiten
+                        <Pencil size={16} />
                       </button>
                       <button
                         type="button"
+                        title="Löschen"
                         onClick={() => setDeleteConfirm(inv.id)}
-                        className="text-xs text-red-600 hover:underline"
+                        className="p-1 text-red-600 hover:text-red-800 cursor-pointer"
                       >
-                        Löschen
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>

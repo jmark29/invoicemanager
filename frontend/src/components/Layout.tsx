@@ -1,19 +1,24 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import {
+  LayoutDashboard, FileText, FilePlus, Scale, Users,
+  LayoutList, FileDown, Landmark, Monitor, Euro, Settings,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: '⌂' },
-  { to: '/invoices', label: 'Rechnungen', icon: '📄' },
-  { to: '/invoices/generate', label: 'Rechnung erstellen', icon: '+' },
-  { to: '/reconciliation', label: 'Abstimmung', icon: '⚖' },
-  { to: '/clients', label: 'Kunden', icon: '👤' },
-  { to: '/categories', label: 'Kategorien', icon: '☰' },
-  { to: '/provider-invoices', label: 'Lieferantenrechnungen', icon: '📥' },
-  { to: '/bank-transactions', label: 'Bank', icon: '🏦' },
-  { to: '/upwork-transactions', label: 'Upwork', icon: '💻' },
-  { to: '/payments', label: 'Zahlungen', icon: '€' },
-  { to: '/settings', label: 'Einstellungen', icon: '⚙' },
-] as const
+const NAV_ITEMS: { to: string; label: string; icon: LucideIcon }[] = [
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/invoices', label: 'Rechnungen', icon: FileText },
+  { to: '/invoices/generate', label: 'Rechnung erstellen', icon: FilePlus },
+  { to: '/reconciliation', label: 'Abstimmung', icon: Scale },
+  { to: '/clients', label: 'Kunden', icon: Users },
+  { to: '/categories', label: 'Kategorien', icon: LayoutList },
+  { to: '/provider-invoices', label: 'Lieferantenrechnungen', icon: FileDown },
+  { to: '/bank-transactions', label: 'Bank', icon: Landmark },
+  { to: '/upwork-transactions', label: 'Upwork', icon: Monitor },
+  { to: '/payments', label: 'Zahlungen', icon: Euro },
+  { to: '/settings', label: 'Einstellungen', icon: Settings },
+]
 
 export function Layout() {
   return (
@@ -37,8 +42,15 @@ export function Layout() {
                 }`
               }
             >
-              <span className="w-5 text-center">{item.icon}</span>
-              {item.label}
+              {({ isActive }) => (
+                <>
+                  <item.icon
+                    size={18}
+                    className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`}
+                  />
+                  <span>{item.label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>

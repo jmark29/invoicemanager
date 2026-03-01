@@ -5,6 +5,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { PDFPreviewModal } from '@/components/PDFPreviewModal'
+import { Eye } from 'lucide-react'
 import { useInvoices, useClients, useUpdateInvoiceStatus } from '@/hooks/useApi'
 import { formatDateGerman, formatMonthYear } from '@/utils/format'
 import type { InvoiceStatus } from '@/types/api'
@@ -139,10 +140,11 @@ export function InvoiceList() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
+                        title="PDF Vorschau"
                         onClick={() => setPreviewInv({ id: inv.id, label: inv.invoice_number })}
-                        className="text-xs text-blue-600 hover:underline"
+                        className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer"
                       >
-                        PDF
+                        <Eye size={16} />
                       </button>
                       <select
                         value={inv.status}

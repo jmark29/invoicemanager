@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import date
 
-from sqlalchemy import and_
+from sqlalchemy import and_, extract, or_
 from sqlalchemy.orm import Session
 
 from backend.models.bank_transaction import BankTransaction
@@ -79,7 +79,14 @@ def reconcile_month(year: int, month: int, db: Session) -> MonthlyReconciliation
             db.query(ProviderInvoice)
             .filter(
                 ProviderInvoice.category_id == cat.id,
-                ProviderInvoice.assigned_month == month_str,
+                or_(
+                    ProviderInvoice.assigned_month == month_str,
+                    and_(
+                        ProviderInvoice.assigned_month.is_(None),
+                        extract('year', ProviderInvoice.invoice_date) == year,
+                        extract('month', ProviderInvoice.invoice_date) == month,
+                    ),
+                ),
             )
             .all()
         )
@@ -113,20 +120,21 @@ def reconcile_month(year: int, month: int, db: Session) -> MonthlyReconciliation
         .filter(
             BankTransaction.provider_invoice_id.is_(None),
             BankTransaction.category_id.isnot(None),
+            extract('year', BankTransaction.booking_date) == year,
+            extract('month', BankTransaction.booking_date) == month,
         )
         .all()
     )
     for tx in unmatched_bank:
-        if tx.booking_date.year == year and tx.booking_date.month == month:
-            result.unmatched_bank_transactions.append(
-                UnmatchedBankTransaction(
-                    id=tx.id,
-                    booking_date=tx.booking_date,
-                    amount_eur=abs(tx.amount_eur),
-                    description=tx.description or "",
-                    category_id=tx.category_id,
-                )
+        result.unmatched_bank_transactions.append(
+            UnmatchedBankTransaction(
+                id=tx.id,
+                booking_date=tx.booking_date,
+                amount_eur=abs(tx.amount_eur),
+                description=tx.description or "",
+                category_id=tx.category_id,
             )
+        )
 
     # Generated invoice + payment status
     gen_inv = (

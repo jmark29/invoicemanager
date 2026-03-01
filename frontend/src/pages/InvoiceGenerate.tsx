@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MonthSelector } from '@/components/MonthSelector'
 import { AmountDisplay } from '@/components/AmountDisplay'
@@ -26,9 +26,11 @@ export function InvoiceGenerate() {
   const generateMutation = useGenerateInvoice()
 
   // Auto-select first client
-  if (clients && clients.length > 0 && !clientId) {
-    setClientId(clients[0]!.id)
-  }
+  useEffect(() => {
+    if (clients && clients.length > 0 && !clientId) {
+      setClientId(clients[0]!.id)
+    }
+  }, [clients, clientId])
 
   const selectedClient = clients?.find((c) => c.id === clientId)
 

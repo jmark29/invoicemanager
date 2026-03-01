@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MonthSelector } from '@/components/MonthSelector'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import { PageHeader } from '@/components/PageHeader'
@@ -17,6 +17,7 @@ export function Reconciliation() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
+  const [autoJumped, setAutoJumped] = useState(false)
 
   const { data, isLoading, isError, error, refetch } = useDashboardReconciliation(year, month)
   const confirmMatch = useConfirmMatch()
@@ -30,6 +31,47 @@ export function Reconciliation() {
 
   const monthStr = `${year}-${String(month).padStart(2, '0')}`
   const { data: invoicesForMonth } = useProviderInvoices({ assigned_month: monthStr })
+
+  // Fetch all provider invoices for smart month default
+  const { data: allProviderInvoices } = useProviderInvoices()
+
+  // Smart default: jump to most recent month with data
+  useEffect(() => {
+    if (allProviderInvoices && !autoJumped) {
+      const hasCurrentMonthData = allProviderInvoices.some((pi) => {
+        if (pi.assigned_month) {
+          const [y, m] = pi.assigned_month.split('-').map(Number)
+          return y === year && m === month
+        }
+        const d = new Date(pi.invoice_date)
+        return d.getFullYear() === year && d.getMonth() + 1 === month
+      })
+
+      if (!hasCurrentMonthData && allProviderInvoices.length > 0) {
+        const months: { year: number; month: number }[] = []
+        for (const pi of allProviderInvoices) {
+          if (pi.assigned_month) {
+            const [y, m] = pi.assigned_month.split('-').map(Number)
+            if (y && m) months.push({ year: y, month: m })
+          } else {
+            const d = new Date(pi.invoice_date)
+            months.push({ year: d.getFullYear(), month: d.getMonth() + 1 })
+          }
+        }
+        if (months.length > 0) {
+          const sorted = months.sort((a, b) =>
+            a.year !== b.year ? b.year - a.year : b.month - a.month
+          )
+          const latest = sorted[0]
+          if (latest) {
+            setYear(latest.year)
+            setMonth(latest.month)
+          }
+        }
+      }
+      setAutoJumped(true)
+    }
+  }, [allProviderInvoices, autoJumped, year, month])
 
   const handleConfirm = (sm: SuggestedMatch) => {
     confirmMatch.mutate(

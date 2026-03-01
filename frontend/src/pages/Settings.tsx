@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { PageHeader } from '@/components/PageHeader'
 import { AmountDisplay } from '@/components/AmountDisplay'
+import { Pencil } from 'lucide-react'
 import {
   useClients, useLineItemDefs, useCreateLineItemDef, useUpdateLineItemDef,
   useCostCategories, useCompanySettings, useUpdateCompanySettings,
@@ -202,7 +203,7 @@ function LineItemSettings() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-700">Rechnungspositionen</h2>
         <div className="flex items-center gap-3">
-          {clients && clients.length > 1 && (
+          {clients && clients.length > 0 && (
             <select
               value={selectedClientId ?? ''}
               onChange={(e) => setSelectedClientId(e.target.value || undefined)}
@@ -384,8 +385,8 @@ function LineItemSettings() {
                         </button>
                       </div>
                     ) : (
-                      <button type="button" onClick={() => startEdit(def)} className="text-xs text-blue-600 hover:underline">
-                        Bearbeiten
+                      <button type="button" title="Bearbeiten" onClick={() => startEdit(def)} className="p-1 text-blue-600 hover:text-blue-800 cursor-pointer">
+                        <Pencil size={16} />
                       </button>
                     )}
                   </td>

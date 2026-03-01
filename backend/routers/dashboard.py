@@ -1,6 +1,7 @@
 """Dashboard aggregation and reconciliation endpoints."""
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import and_, extract, or_
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -102,37 +103,45 @@ def get_reconciliation(year: int, month: int, db: Session = Depends(get_db)):
     suggested_txns = db.query(BankTransaction).filter(
         BankTransaction.match_status == "suggested",
         BankTransaction.provider_invoice_id.is_(None),
+        extract('year', BankTransaction.booking_date) == year,
+        extract('month', BankTransaction.booking_date) == month,
     ).all()
     suggested_matches = []
     for tx in suggested_txns:
-        if tx.booking_date.year == year and tx.booking_date.month == month:
-            # Find the best candidate invoice
-            from backend.services.transaction_matching import find_invoice_matches_for_transaction
-            candidates = find_invoice_matches_for_transaction(tx, db)
-            if candidates:
-                best = candidates[0]
-                inv = db.get(ProviderInvoice, best.provider_invoice_id)
-                if inv:
-                    suggested_matches.append(SuggestedMatchResponse(
-                        bank_transaction_id=tx.id,
-                        provider_invoice_id=inv.id,
-                        confidence=best.confidence,
-                        match_reason=best.match_reason,
-                        tx_booking_date=tx.booking_date,
-                        tx_amount_eur=abs(tx.amount_eur),
-                        tx_description=tx.description,
-                        tx_category_id=tx.category_id,
-                        inv_invoice_number=inv.invoice_number,
-                        inv_amount=inv.amount,
-                        inv_currency=inv.currency,
-                        inv_category_id=inv.category_id,
-                    ))
+        # Find the best candidate invoice
+        from backend.services.transaction_matching import find_invoice_matches_for_transaction
+        candidates = find_invoice_matches_for_transaction(tx, db)
+        if candidates:
+            best = candidates[0]
+            inv = db.get(ProviderInvoice, best.provider_invoice_id)
+            if inv:
+                suggested_matches.append(SuggestedMatchResponse(
+                    bank_transaction_id=tx.id,
+                    provider_invoice_id=inv.id,
+                    confidence=best.confidence,
+                    match_reason=best.match_reason,
+                    tx_booking_date=tx.booking_date,
+                    tx_amount_eur=abs(tx.amount_eur),
+                    tx_description=tx.description,
+                    tx_category_id=tx.category_id,
+                    inv_invoice_number=inv.invoice_number,
+                    inv_amount=inv.amount,
+                    inv_currency=inv.currency,
+                    inv_category_id=inv.category_id,
+                ))
 
     # Completed matches: linked pairs for this month
     completed_matches = []
     matched_invoices = db.query(ProviderInvoice).filter(
         ProviderInvoice.payment_status == "matched",
-        ProviderInvoice.assigned_month == month_str,
+        or_(
+            ProviderInvoice.assigned_month == month_str,
+            and_(
+                ProviderInvoice.assigned_month.is_(None),
+                extract('year', ProviderInvoice.invoice_date) == year,
+                extract('month', ProviderInvoice.invoice_date) == month,
+            ),
+        ),
     ).all()
     for inv in matched_invoices:
         tx = db.query(BankTransaction).filter(
@@ -158,7 +167,14 @@ def get_reconciliation(year: int, month: int, db: Session = Depends(get_db)):
     # Unmatched invoices for this month
     unmatched_invs = db.query(ProviderInvoice).filter(
         ProviderInvoice.payment_status.in_(["unpaid", "partial"]),
-        ProviderInvoice.assigned_month == month_str,
+        or_(
+            ProviderInvoice.assigned_month == month_str,
+            and_(
+                ProviderInvoice.assigned_month.is_(None),
+                extract('year', ProviderInvoice.invoice_date) == year,
+                extract('month', ProviderInvoice.invoice_date) == month,
+            ),
+        ),
     ).all()
     unmatched_invoices = [
         UnmatchedInvoiceResponse(
