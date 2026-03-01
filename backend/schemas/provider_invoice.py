@@ -44,5 +44,10 @@ class ProviderInvoiceResponse(ProviderInvoiceBase):
     id: int
     file_path: str | None = None
     created_at: datetime
+    payment_status: str = "unpaid"
+    matched_transaction_id: int | None = None
+    amount_eur: float | None = None
+    bank_fee: float | None = None
+    fx_rate: float | None = None
 
     model_config = {"from_attributes": True}

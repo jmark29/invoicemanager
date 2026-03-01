@@ -5,7 +5,7 @@ import { AmountDisplay } from '@/components/AmountDisplay'
 import { StatusBadge } from '@/components/StatusBadge'
 import { PageHeader } from '@/components/PageHeader'
 import { ErrorAlert } from '@/components/ErrorAlert'
-import { useInvoices, useClients, useDashboardOpenInvoices, useDashboardReconciliation } from '@/hooks/useApi'
+import { useInvoices, useClients, useDashboardOpenInvoices, useDashboardReconciliation, useProviderInvoices } from '@/hooks/useApi'
 import { formatMonthYear, formatDateGerman } from '@/utils/format'
 import type { InvoiceStatus } from '@/types/api'
 
@@ -19,29 +19,49 @@ export function Dashboard() {
   const { data: invoices, isLoading, isError, error, refetch } = useInvoices({ year, client_id: clientId })
   const { data: openInvoices } = useDashboardOpenInvoices()
   const { data: reconciliation } = useDashboardReconciliation(year, month)
+  const { data: providerInvoices } = useProviderInvoices()
 
-  // Smart default: if current month has no invoices, jump to most recent month with data
+  // Smart default: if current month has no data, jump to most recent month with invoices or provider invoices
   const [autoJumped, setAutoJumped] = useState(false)
   useEffect(() => {
     if (invoices && !autoJumped) {
       const currentMonthHasData = invoices.some(
         (inv) => inv.period_year === year && inv.period_month === month,
       )
-      if (!currentMonthHasData && invoices.length > 0) {
-        // Find most recent month with invoices
-        const sorted = [...invoices].sort((a, b) => {
-          if (a.period_year !== b.period_year) return b.period_year - a.period_year
-          return b.period_month - a.period_month
-        })
-        const latest = sorted[0]
-        if (latest) {
-          setYear(latest.period_year)
-          setMonth(latest.period_month)
+
+      // Also check if provider invoices exist for this month
+      const monthStr = `${year}-${String(month).padStart(2, '0')}`
+      const hasProviderData = providerInvoices?.some((pi) => pi.assigned_month === monthStr)
+
+      if (!currentMonthHasData && !hasProviderData) {
+        // Collect all months with any data
+        const months: { year: number; month: number }[] = []
+        for (const inv of invoices) {
+          months.push({ year: inv.period_year, month: inv.period_month })
+        }
+        if (providerInvoices) {
+          for (const pi of providerInvoices) {
+            if (pi.assigned_month) {
+              const [y, m] = pi.assigned_month.split('-').map(Number)
+              if (y && m) months.push({ year: y, month: m })
+            }
+          }
+        }
+        if (months.length > 0) {
+          const sorted = months.sort((a, b) => {
+            if (a.year !== b.year) return b.year - a.year
+            return b.month - a.month
+          })
+          const latest = sorted[0]
+          if (latest) {
+            setYear(latest.year)
+            setMonth(latest.month)
+          }
         }
       }
       setAutoJumped(true)
     }
-  }, [invoices, autoJumped, year, month])
+  }, [invoices, providerInvoices, autoJumped, year, month])
 
   const monthInvoices = invoices?.filter(
     (inv) => inv.period_year === year && inv.period_month === month,

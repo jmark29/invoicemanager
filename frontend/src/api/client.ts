@@ -12,7 +12,9 @@ import type {
   InvoicePreviewRequest, InvoicePreviewResponse,
   InvoiceGenerateRequest, InvoiceRegenerateRequest, InvoiceStatusUpdate,
   MonthlyDashboard, OpenInvoicesData, ReconciliationData,
+  MatchActionResponse,
   WorkingDaysResponse,
+  BulkUploadResponse, BulkUploadConfirmItem, BulkUploadConfirmResponse,
 } from '@/types/api'
 
 // ── Base helpers ───────────────────────────────────────────────
@@ -110,6 +112,22 @@ export const providerInvoicesApi = {
   uploadPdf: (id: number, file: File) =>
     apiUpload<ProviderInvoice>(`/api/provider-invoices/${id}/upload`, file),
   downloadUrl: (id: number) => `/api/provider-invoices/${id}/download`,
+  bulkUpload: async (files: File[], categoryId?: string): Promise<BulkUploadResponse> => {
+    const formData = new FormData()
+    for (const file of files) formData.append('files', file)
+    const params = categoryId ? `?category_id=${encodeURIComponent(categoryId)}` : ''
+    const res = await fetch(`/api/provider-invoices/bulk-upload${params}`, { method: 'POST', body: formData })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as { detail?: string }
+      throw new Error(body.detail ?? `Upload error ${res.status}`)
+    }
+    return res.json() as Promise<BulkUploadResponse>
+  },
+  bulkConfirm: (items: BulkUploadConfirmItem[]) =>
+    apiFetch<BulkUploadConfirmResponse>('/api/provider-invoices/bulk-confirm', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    }),
 }
 
 // ── Bank Transactions ──────────────────────────────────────────
@@ -131,6 +149,21 @@ export const bankTransactionsApi = {
     ),
   importHistory: () =>
     apiFetch<ImportHistoryItem[]>('/api/bank-transactions/import-history'),
+  confirmMatch: (txId: number, invoiceId: number) =>
+    apiFetch<MatchActionResponse>(`/api/bank-transactions/${txId}/match`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'confirm', provider_invoice_id: invoiceId }),
+    }),
+  rejectMatch: (txId: number) =>
+    apiFetch<{ match_status: string }>(`/api/bank-transactions/${txId}/match`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'reject' }),
+    }),
+  manualMatch: (txId: number, invoiceId: number, bankFee?: number) =>
+    apiFetch<MatchActionResponse>(`/api/bank-transactions/${txId}/manual-match`, {
+      method: 'POST',
+      body: JSON.stringify({ provider_invoice_id: invoiceId, bank_fee: bankFee }),
+    }),
 }
 
 // ── Upwork Transactions ────────────────────────────────────────

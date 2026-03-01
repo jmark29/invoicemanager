@@ -32,9 +32,22 @@ class ProviderInvoice(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 
+    # Sprint 2: matching and FX tracking
+    payment_status: Mapped[str] = mapped_column(String, default="unpaid")  # unpaid, matched, paid, partial
+    matched_transaction_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("bank_transactions.id", use_alter=True), nullable=True
+    )
+    amount_eur: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # EUR bank debit
+    bank_fee: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # banking/FX fee
+    fx_rate: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # effective exchange rate
+
     category: Mapped["CostCategory"] = relationship(back_populates="provider_invoices")
     bank_transactions: Mapped[list["BankTransaction"]] = relationship(
-        back_populates="provider_invoice"
+        back_populates="provider_invoice",
+        foreign_keys="BankTransaction.provider_invoice_id",
+    )
+    matched_transaction: Mapped[Optional["BankTransaction"]] = relationship(
+        foreign_keys=[matched_transaction_id],
     )
 
     @property

@@ -15,6 +15,7 @@ import type {
   CompanySettingsUpdate,
   InvoicePreviewRequest, InvoiceGenerateRequest, InvoiceStatusUpdate, InvoiceRegenerateRequest,
   PaymentReceiptCreate, PaymentReceiptUpdate,
+  BulkUploadConfirmItem,
 } from '@/types/api'
 
 // ── Query keys ─────────────────────────────────────────────────
@@ -177,6 +178,21 @@ export function useUploadProviderInvoicePdf() {
   })
 }
 
+export function useBulkUpload() {
+  return useMutation({
+    mutationFn: ({ files, categoryId }: { files: File[]; categoryId?: string }) =>
+      providerInvoicesApi.bulkUpload(files, categoryId),
+  })
+}
+
+export function useBulkConfirm() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (items: BulkUploadConfirmItem[]) => providerInvoicesApi.bulkConfirm(items),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ['providerInvoices'] }) },
+  })
+}
+
 // ── Bank Transactions ──────────────────────────────────────────
 
 export function useBankTransactions(params?: { category_id?: string; provider_invoice_id?: number }) {
@@ -210,6 +226,43 @@ export function useBankImportHistory() {
   return useQuery({
     queryKey: ['bankImportHistory'],
     queryFn: () => bankTransactionsApi.importHistory(),
+  })
+}
+
+export function useConfirmMatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ txId, invoiceId }: { txId: number; invoiceId: number }) =>
+      bankTransactionsApi.confirmMatch(txId, invoiceId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['dashboardReconciliation'] })
+      void qc.invalidateQueries({ queryKey: ['bankTransactions'] })
+      void qc.invalidateQueries({ queryKey: ['providerInvoices'] })
+    },
+  })
+}
+
+export function useRejectMatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (txId: number) => bankTransactionsApi.rejectMatch(txId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['dashboardReconciliation'] })
+      void qc.invalidateQueries({ queryKey: ['bankTransactions'] })
+    },
+  })
+}
+
+export function useManualMatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ txId, invoiceId, bankFee }: { txId: number; invoiceId: number; bankFee?: number }) =>
+      bankTransactionsApi.manualMatch(txId, invoiceId, bankFee),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['dashboardReconciliation'] })
+      void qc.invalidateQueries({ queryKey: ['bankTransactions'] })
+      void qc.invalidateQueries({ queryKey: ['providerInvoices'] })
+    },
   })
 }
 

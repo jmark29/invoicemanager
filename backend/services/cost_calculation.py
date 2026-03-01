@@ -120,9 +120,12 @@ def calculate_direct_amount(
             warnings=[f"Pos {definition.position}: no provider invoice for {month_str}"],
         )
 
-    # EUR provider: use invoice amount directly
-    # USD provider: use bank payment EUR amount (includes FX conversion + fees)
-    if category.currency == "USD":
+    # Prefer denormalized amount_eur (set by transaction matching) when available.
+    # This includes FX conversion + banking fees for foreign currency invoices.
+    if invoice.amount_eur is not None:
+        amount = invoice.amount_eur
+    elif category.currency == "USD":
+        # Fallback: look up linked bank transaction directly
         bank_tx = (
             db.query(BankTransaction)
             .filter(BankTransaction.provider_invoice_id == invoice.id)
@@ -213,8 +216,9 @@ def calculate_distributed_amount(
             ],
         )
 
-    # Distribute the bank payment (abs value) across covered months by working days
-    base_amount = abs(bank_tx.amount_eur)
+    # Prefer denormalized amount_eur from invoice (includes bank fees),
+    # fall back to bank transaction amount
+    base_amount = target_invoice.amount_eur if target_invoice.amount_eur is not None else abs(bank_tx.amount_eur)
     months_tuples = []
     for m_str in target_invoice.covers_months:
         parts = m_str.split("-")

@@ -161,6 +161,11 @@ export interface ProviderInvoice {
   file_path: string | null
   notes: string | null
   created_at: string
+  payment_status: string
+  matched_transaction_id: number | null
+  amount_eur: number | null
+  bank_fee: number | null
+  fx_rate: number | null
 }
 
 export interface ProviderInvoiceCreate {
@@ -210,6 +215,8 @@ export interface BankTransaction {
   fx_rate: number | null
   bank_fee: number | null
   notes: string | null
+  match_status: string
+  match_confidence: number | null
 }
 
 export interface BankTransactionCreate {
@@ -468,6 +475,55 @@ export interface InvoicePaymentStatus {
   balance: number
 }
 
+export interface SuggestedMatch {
+  bank_transaction_id: number
+  provider_invoice_id: number
+  confidence: number
+  match_reason: string
+  tx_booking_date: string
+  tx_amount_eur: number
+  tx_description: string
+  tx_category_id: string | null
+  inv_invoice_number: string
+  inv_amount: number
+  inv_currency: string
+  inv_category_id: string
+}
+
+export interface CompletedMatch {
+  bank_transaction_id: number
+  provider_invoice_id: number
+  match_status: string
+  tx_booking_date: string
+  tx_amount_eur: number
+  tx_description: string
+  inv_invoice_number: string
+  inv_amount: number
+  inv_currency: string
+  inv_category_id: string
+  amount_eur: number | null
+  fx_rate: number | null
+  bank_fee: number | null
+}
+
+export interface UnmatchedInvoice {
+  id: number
+  invoice_number: string
+  invoice_date: string
+  amount: number
+  currency: string
+  category_id: string
+  assigned_month: string | null
+}
+
+export interface MatchActionResponse {
+  success: boolean
+  amount_eur: number | null
+  fx_rate: number | null
+  bank_fee: number | null
+  match_status: string
+}
+
 export interface ReconciliationData {
   year: number
   month: number
@@ -475,7 +531,46 @@ export interface ReconciliationData {
   matched_count: number
   unmatched_count: number
   unmatched_bank_transactions: UnmatchedBankTx[]
+  suggested_matches: SuggestedMatch[]
+  completed_matches: CompletedMatch[]
+  unmatched_invoices: UnmatchedInvoice[]
   invoice_status: InvoicePaymentStatus | null
+}
+
+// ── Bulk Upload ──────────────────────────────────────────
+
+export interface BulkUploadExtraction {
+  filename: string
+  stored_path: string
+  invoice_number: string | null
+  invoice_date: string | null
+  amount: number | null
+  currency: string | null
+  category_id: string | null
+  confidence: string
+}
+
+export interface BulkUploadResponse {
+  extractions: BulkUploadExtraction[]
+  total: number
+  extracted: number
+}
+
+export interface BulkUploadConfirmItem {
+  filename: string
+  stored_path: string
+  invoice_number: string
+  invoice_date: string
+  amount: number
+  currency: string
+  category_id: string
+  assigned_month?: string | null
+}
+
+export interface BulkUploadConfirmResponse {
+  created: number
+  auto_matched: number
+  errors: string[]
 }
 
 // ── Company Settings ──────────────────────────────────────────

@@ -579,7 +579,89 @@ def get_working_days(year: int, month: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Tool 10: get_distribution
+# Tool 10: get_unmatched_transactions
+# ---------------------------------------------------------------------------
+@mcp.tool()
+def get_unmatched_transactions(
+    category_id: str | None = None,
+    limit: int = 50,
+) -> str:
+    """Get bank transactions that have no matching provider invoice.
+
+    Args:
+        category_id: Optional filter by cost category
+        limit: Maximum results (default: 50)
+    """
+    try:
+        with get_session() as db:
+            query = db.query(BankTransaction).filter(
+                BankTransaction.match_status.in_(["unmatched", "suggested"]),
+                BankTransaction.provider_invoice_id.is_(None),
+            )
+            if category_id:
+                query = query.filter(BankTransaction.category_id == category_id)
+
+            txns = query.order_by(BankTransaction.booking_date.desc()).limit(limit).all()
+
+            if not txns:
+                return "Keine offenen Banktransaktionen ohne Rechnungszuordnung."
+
+            lines = [f"Offene Banktransaktionen ({len(txns)}):"]
+            for tx in txns:
+                cat = f"[{tx.category_id}]" if tx.category_id else "[--]"
+                status = f" ({tx.match_status})" if tx.match_status == "suggested" else ""
+                lines.append(
+                    f"  #{tx.id}  {format_date_german(tx.booking_date)}  "
+                    f"{format_eur(abs(tx.amount_eur)):>12s}  {cat}  "
+                    f"{tx.description[:50]}{status}"
+                )
+            return "\n".join(lines)
+    except Exception as e:
+        return f"Fehler: {e}"
+
+
+# ---------------------------------------------------------------------------
+# Tool 11: get_unmatched_invoices
+# ---------------------------------------------------------------------------
+@mcp.tool()
+def get_unmatched_invoices(
+    category_id: str | None = None,
+    limit: int = 50,
+) -> str:
+    """Get provider invoices without a matched bank payment.
+
+    Args:
+        category_id: Optional filter by cost category
+        limit: Maximum results (default: 50)
+    """
+    try:
+        with get_session() as db:
+            query = db.query(ProviderInvoice).filter(
+                ProviderInvoice.payment_status.in_(["unpaid", "partial"]),
+            )
+            if category_id:
+                query = query.filter(ProviderInvoice.category_id == category_id)
+
+            invoices = query.order_by(ProviderInvoice.invoice_date.desc()).limit(limit).all()
+
+            if not invoices:
+                return "Keine unbezahlten Rechnungen."
+
+            lines = [f"Unbezahlte Rechnungen ({len(invoices)}):"]
+            for inv in invoices:
+                month = inv.assigned_month or "-"
+                lines.append(
+                    f"  #{inv.id}  {inv.invoice_number:<20s}  "
+                    f"{format_eur(inv.amount):>12s} {inv.currency}  "
+                    f"[{inv.category_id}]  Monat: {month}"
+                )
+            return "\n".join(lines)
+    except Exception as e:
+        return f"Fehler: {e}"
+
+
+# ---------------------------------------------------------------------------
+# Tool 12: get_distribution
 # ---------------------------------------------------------------------------
 @mcp.tool()
 def get_distribution(total_amount: float, months: list[str]) -> str:

@@ -32,9 +32,14 @@ class BankTransaction(Base):
     bank_fee: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # Sprint 2: matching
+    match_status: Mapped[str] = mapped_column(String, default="unmatched")  # auto_matched, suggested, manual, unmatched, rejected
+    match_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # 0.0 to 1.0
+
     category: Mapped[Optional["CostCategory"]] = relationship(
         back_populates="bank_transactions"
     )
     provider_invoice: Mapped[Optional["ProviderInvoice"]] = relationship(
-        back_populates="bank_transactions"
+        back_populates="bank_transactions",
+        foreign_keys=[provider_invoice_id],
     )

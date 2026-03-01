@@ -18,8 +18,10 @@ from backend.schemas.bank_transaction import (
     BankTransactionUpdate,
 )
 from backend.schemas.import_history import ImportHistoryResponse
+from backend.schemas.matching import MatchAction, MatchActionResponse, ManualMatchRequest
 from backend.services.bank_import import import_bank_transactions
 from backend.services.file_validation import validate_xlsx
+from backend.services.transaction_matching import apply_match, reject_match
 
 router = APIRouter(prefix="/api/bank-transactions", tags=["bank-transactions"])
 
@@ -118,11 +120,80 @@ def import_bank_xlsx(
         imported=result.imported,
         skipped_duplicate=result.skipped_duplicate,
         auto_matched=result.auto_matched,
+        invoice_auto_matched=result.invoice_auto_matched,
+        invoice_suggested=result.invoice_suggested,
         potential_duplicates=[
             {"booking_date": d.booking_date, "amount_eur": d.amount_eur, "description": d.description}
             for d in result.potential_duplicates
         ],
         errors=result.errors,
+    )
+
+
+@router.post("/{tx_id}/match", response_model=MatchActionResponse)
+def confirm_or_reject_match(
+    tx_id: int,
+    data: MatchAction,
+    db: Session = Depends(get_db),
+):
+    """Confirm or reject a suggested transaction-to-invoice match."""
+    tx = db.get(BankTransaction, tx_id)
+    if not tx:
+        raise HTTPException(404, f"Bank transaction {tx_id} not found")
+
+    if data.action == "reject":
+        reject_match(tx_id, db)
+        return MatchActionResponse(
+            success=True,
+            message=f"Match for transaction {tx_id} rejected",
+            match_status="rejected",
+        )
+
+    # Confirm: must have a suggested invoice to confirm
+    if not tx.provider_invoice_id and tx.match_status != "suggested":
+        raise HTTPException(400, "No suggested match to confirm for this transaction")
+
+    # Find the suggested invoice — search for the best candidate
+    from backend.services.transaction_matching import find_invoice_matches_for_transaction
+    candidates = find_invoice_matches_for_transaction(tx, db)
+    if not candidates:
+        raise HTTPException(400, "No matching invoice found for this transaction")
+
+    result = apply_match(tx_id, candidates[0].provider_invoice_id, db, "manual", data.bank_fee)
+    return MatchActionResponse(
+        success=True,
+        message=f"Transaction {tx_id} matched to invoice",
+        match_status=result["match_status"],
+        amount_eur=result["amount_eur"],
+        fx_rate=result["fx_rate"],
+        bank_fee=result["bank_fee"],
+    )
+
+
+@router.post("/{tx_id}/manual-match", response_model=MatchActionResponse)
+def manual_match(
+    tx_id: int,
+    data: ManualMatchRequest,
+    db: Session = Depends(get_db),
+):
+    """Manually link a transaction to a specific provider invoice."""
+    tx = db.get(BankTransaction, tx_id)
+    if not tx:
+        raise HTTPException(404, f"Bank transaction {tx_id} not found")
+
+    from backend.models.provider_invoice import ProviderInvoice
+    inv = db.get(ProviderInvoice, data.provider_invoice_id)
+    if not inv:
+        raise HTTPException(404, f"Provider invoice {data.provider_invoice_id} not found")
+
+    result = apply_match(tx_id, data.provider_invoice_id, db, "manual", data.bank_fee)
+    return MatchActionResponse(
+        success=True,
+        message=f"Transaction {tx_id} manually matched to invoice {inv.invoice_number}",
+        match_status=result["match_status"],
+        amount_eur=result["amount_eur"],
+        fx_rate=result["fx_rate"],
+        bank_fee=result["bank_fee"],
     )
 
 

@@ -235,10 +235,10 @@ class TestActionTools:
         assert "Fehler" in result
         assert "Ungültiger Status" in result
 
-    def test_record_provider_invoice(self):
-        from mcp_server.tools_action import record_provider_invoice
+    def test_create_provider_invoice(self):
+        from mcp_server.tools_action import create_provider_invoice
 
-        result = record_provider_invoice(
+        result = create_provider_invoice(
             category_id="junior_fm",
             invoice_number="TEST-INV-001",
             invoice_date="2025-07-15",
@@ -248,10 +248,10 @@ class TestActionTools:
         assert "TEST-INV-001" in result
         assert "1.350,00" in result
 
-    def test_record_provider_invoice_invalid_category(self):
-        from mcp_server.tools_action import record_provider_invoice
+    def test_create_provider_invoice_invalid_category(self):
+        from mcp_server.tools_action import create_provider_invoice
 
-        result = record_provider_invoice(
+        result = create_provider_invoice(
             category_id="nonexistent",
             invoice_number="TEST-INV-002",
             invoice_date="2025-07-15",

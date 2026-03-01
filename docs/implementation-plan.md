@@ -16,6 +16,7 @@
 | 1.9 | 2026-02-27 | Post-build: User Guide, Makefile, auto-seed on startup, DYLD_LIBRARY_PATH fix |
 | 2.0 | 2026-02-28 | Revision Sprint 1: bug fixes, document management, multi-client foundation |
 | 2.1 | 2026-02-28 | Revision Sprint 1 completed — all 13 tasks done (337 backend + 32 frontend tests) |
+| 3.0 | 2026-02-28 | Revision Sprint 2: bulk upload, transaction matching, FX tracking, reconciliation |
 
 ---
 
@@ -537,3 +538,69 @@ Creates:
 ### Sidebar Navigation (updated order)
 
 1. Dashboard, 2. Rechnungen, 3. Rechnung erstellen, 4. Abstimmung, 5. **Kunden** (new), 6. Kategorien, 7. Lieferantenrechnungen, 8. Bank, 9. Upwork, 10. Zahlungen, 11. Einstellungen
+
+---
+
+## Revision Sprint 2 — Bulk Upload, Transaction Matching, FX Tracking & Reconciliation
+
+> **Date:** 2026-02-28
+> **Spec:** `docs/InvoiceManager-Revision-Sprint-2.md`
+
+### Context
+
+Sprint 2 adds: bulk PDF upload with auto-extraction, bidirectional transaction-to-invoice matching, currency/FX tracking, an improved reconciliation dashboard, and UX polish carry-overs. The goal is to eliminate manual data entry and make reconciliation a one-click workflow.
+
+**Key decisions:**
+- Bidirectional FK: `matched_transaction_id` on `provider_invoices` + existing `provider_invoice_id` on `bank_transactions`
+- High-confidence matches (invoice number in bank description) auto-link immediately; medium/low go to review
+- PDF extraction is best-effort with graceful fallback to manual entry
+- Rename MCP tool `record_provider_invoice` → `create_provider_invoice`, add bulk variant
+- Single Alembic migration for all Sprint 2 schema changes
+- New dependency: `pdfplumber>=0.10.0`
+
+### DB Migration (single migration for entire sprint)
+
+New columns on `provider_invoices`: payment_status, matched_transaction_id (FK), amount_eur, bank_fee, fx_rate
+New columns on `bank_transactions`: match_status, match_confidence
+Backfill: existing linked records get payment_status='matched', match_status='auto_matched', amount_eur set for EUR invoices
+
+### Task List
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| 1 | Fix document download (auto-link PDFs on startup) | Critical | Pending |
+| 2 | Bulk upload with PDF extraction + review step + MCP tools | Critical | Pending |
+| 3 | Bidirectional transaction matching (auto-match, confidence scoring, review UI) | Critical | Pending |
+| 4 | Currency/FX tracking (amount_eur, fx_rate, bank_fee, fee UI) | High | Pending |
+| 5 | Improved reconciliation dashboard (3-section layout, matching actions) | Medium | Pending |
+| 6 | UX polish carry-overs (tooltip, smart defaults, line item create) | Low | Pending |
+
+### New Files
+
+| File | Purpose |
+|------|---------|
+| `backend/services/transaction_matching.py` | Core matching logic (confidence scoring, auto-link, FX computation) |
+| `backend/services/pdf_extraction.py` | PDF text extraction for bulk upload |
+| `backend/schemas/matching.py` | Pydantic schemas for match endpoints |
+| `backend/schemas/bulk_upload.py` | Pydantic schemas for bulk upload |
+| `frontend/src/components/BulkUploadZone.tsx` | Multi-file upload + review table component |
+| `frontend/src/components/MatchConfirmDialog.tsx` | FX detail panel for match confirmation |
+
+### New API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/provider-invoices/bulk-upload` | Upload multiple PDFs, extract metadata |
+| POST | `/api/provider-invoices/bulk-confirm` | Confirm and create records from bulk upload |
+| POST | `/api/bank-transactions/{id}/match` | Confirm or reject a suggested match |
+| POST | `/api/bank-transactions/{id}/manual-match` | Manually link a transaction to an invoice |
+
+### New MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `create_provider_invoice` | Renamed from `record_provider_invoice`, extended params |
+| `create_provider_invoices_bulk` | Bulk create provider invoice records |
+| `get_unmatched_transactions` | Query unmatched bank transactions |
+| `get_unmatched_invoices` | Query invoices without payment |
+| `match_transaction_to_invoice` | Link a transaction to an invoice |

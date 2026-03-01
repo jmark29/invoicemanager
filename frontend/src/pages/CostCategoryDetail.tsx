@@ -2,8 +2,9 @@ import { useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { PageHeader } from '@/components/PageHeader'
 import { AmountDisplay } from '@/components/AmountDisplay'
+import { BulkUploadZone } from '@/components/BulkUploadZone'
 import { useCostCategory, useProviderInvoices, useBankTransactions, useUploadProviderInvoicePdf, useUpdateCostCategory } from '@/hooks/useApi'
-import { formatDateGerman } from '@/utils/format'
+import { formatDateGerman, formatEur } from '@/utils/format'
 
 export function CostCategoryDetail() {
   const { id } = useParams<{ id: string }>()
@@ -186,6 +187,7 @@ export function CostCategoryDetail() {
         <h3 className="mb-3 text-sm font-semibold text-gray-700">
           Lieferantenrechnungen ({invoices?.length ?? 0})
         </h3>
+        <BulkUploadZone categoryId={id} />
         {invoices && invoices.length > 0 ? (
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
@@ -258,6 +260,11 @@ export function CostCategoryDetail() {
         )}
       </div>
 
+      {/* Cost breakdown (for categories with matched FX data) */}
+      {invoices && invoices.some((inv) => inv.amount_eur != null) && (
+        <CostBreakdown invoices={invoices} currency={category.currency} />
+      )}
+
       {/* Bank transactions */}
       <div className="mt-8">
         <h3 className="mb-3 text-sm font-semibold text-gray-700">
@@ -297,6 +304,69 @@ function Field({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
       <p className="text-xs font-medium text-gray-500">{label}</p>
       <p className="mt-1 text-sm text-gray-900">{value}</p>
+    </div>
+  )
+}
+
+function CostBreakdown({ invoices, currency }: { invoices: { invoice_number: string; amount: number; amount_eur: number | null; fx_rate: number | null; bank_fee: number | null; assigned_month: string | null }[]; currency: string }) {
+  const matched = invoices.filter((inv) => inv.amount_eur != null)
+  if (matched.length === 0) return null
+
+  const totalOriginal = matched.reduce((sum, inv) => sum + inv.amount, 0)
+  const totalEur = matched.reduce((sum, inv) => sum + (inv.amount_eur ?? 0), 0)
+  const totalFee = matched.reduce((sum, inv) => sum + (inv.bank_fee ?? 0), 0)
+  const avgFx = totalOriginal > 0 ? totalEur / totalOriginal : 0
+  const isForeign = currency !== 'EUR'
+
+  return (
+    <div className="mt-8">
+      <h3 className="mb-3 text-sm font-semibold text-gray-700">Kostenübersicht</h3>
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 bg-white text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 text-left font-medium text-gray-600">Rechnung</th>
+              <th className="px-4 py-2 text-left font-medium text-gray-600">Monat</th>
+              <th className="px-4 py-2 text-right font-medium text-gray-600">Betrag ({currency})</th>
+              <th className="px-4 py-2 text-right font-medium text-gray-600">Bank (EUR)</th>
+              {isForeign && <th className="px-4 py-2 text-right font-medium text-gray-600">FX-Kurs</th>}
+              <th className="px-4 py-2 text-right font-medium text-gray-600">Bankgebühr</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {matched.map((inv) => (
+              <tr key={inv.invoice_number} className="hover:bg-gray-50">
+                <td className="px-4 py-2 font-medium">{inv.invoice_number}</td>
+                <td className="px-4 py-2 text-gray-600">{inv.assigned_month ?? '-'}</td>
+                <td className="px-4 py-2 text-right"><AmountDisplay amount={inv.amount} /></td>
+                <td className="px-4 py-2 text-right"><AmountDisplay amount={inv.amount_eur ?? 0} /></td>
+                {isForeign && (
+                  <td className="px-4 py-2 text-right text-gray-500">
+                    {inv.fx_rate != null ? inv.fx_rate.toFixed(4) : '-'}
+                  </td>
+                )}
+                <td className="px-4 py-2 text-right text-gray-500">
+                  {inv.bank_fee != null ? formatEur(inv.bank_fee) : '-'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-gray-50 font-medium">
+            <tr>
+              <td className="px-4 py-2">Gesamt</td>
+              <td className="px-4 py-2">{matched.length} Rechnungen</td>
+              <td className="px-4 py-2 text-right"><AmountDisplay amount={totalOriginal} /></td>
+              <td className="px-4 py-2 text-right"><AmountDisplay amount={totalEur} /></td>
+              {isForeign && (
+                <td className="px-4 py-2 text-right text-gray-500">
+                  {avgFx > 0 ? `Ø ${avgFx.toFixed(4)}` : '-'}
+                </td>
+              )}
+              <td className="px-4 py-2 text-right text-gray-500">{formatEur(totalFee)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   )
 }

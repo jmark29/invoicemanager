@@ -34,6 +34,8 @@ class BankTransactionUpdate(BaseModel):
 
 class BankTransactionResponse(BankTransactionBase):
     id: int
+    match_status: str = "unmatched"
+    match_confidence: float | None = None
 
     model_config = {"from_attributes": True}
 
@@ -48,5 +50,7 @@ class BankImportResponse(BaseModel):
     imported: int
     skipped_duplicate: int
     auto_matched: int
+    invoice_auto_matched: int = 0
+    invoice_suggested: int = 0
     potential_duplicates: list[PotentialDuplicateItem] = []
     errors: list[str]

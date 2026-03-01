@@ -79,6 +79,38 @@ def _fix_stale_file_paths(db: Session) -> None:
         logger.info("Fixed %d stale provider_invoice file_path values", fixed)
 
 
+def _auto_link_pdfs(db: Session) -> None:
+    """Auto-link provider invoices with missing file_path to PDFs found on disk.
+
+    Scans data/categories/{category_id}/ for PDFs whose filename contains the
+    invoice number. Handles cases where seed data didn't set file_path but
+    reference PDFs were copied to disk.
+    """
+    from backend.models.provider_invoice import ProviderInvoice
+
+    invoices = db.query(ProviderInvoice).filter(
+        ProviderInvoice.file_path.is_(None)
+    ).all()
+
+    linked = 0
+    for inv in invoices:
+        cat_dir = settings.CATEGORIES_DIR / inv.category_id
+        if not cat_dir.exists():
+            continue
+        inv_num_lower = inv.invoice_number.lower().replace("/", "-")
+        for pdf in cat_dir.glob("*.pdf"):
+            pdf_name_lower = pdf.name.lower()
+            if inv_num_lower in pdf_name_lower or inv.invoice_number.lower() in pdf_name_lower:
+                rel_path = str(pdf.relative_to(settings.DATA_DIR))
+                inv.file_path = rel_path
+                linked += 1
+                logger.info("Auto-linked invoice %s -> %s", inv.invoice_number, rel_path)
+                break
+    if linked:
+        db.commit()
+        logger.info("Auto-linked %d provider invoices to PDF files on disk", linked)
+
+
 def _validate_file_paths(db: Session) -> None:
     """Log warnings for provider invoices whose file_path points to a missing file."""
     from backend.models.provider_invoice import ProviderInvoice
@@ -122,10 +154,15 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     ]:
         directory.mkdir(parents=True, exist_ok=True)
 
-    # Copy reference PDFs to data/categories/ and fix stale file_path values
+    # Copy reference PDFs to data/categories/ and fix stale/missing file_path values
     _copy_reference_pdfs()
-    _fix_stale_file_paths(db)
-    _validate_file_paths(db)
+    db = SessionLocal()
+    try:
+        _fix_stale_file_paths(db)
+        _auto_link_pdfs(db)
+        _validate_file_paths(db)
+    finally:
+        db.close()
 
     # Check WeasyPrint availability
     try:

@@ -4,6 +4,7 @@ import { AmountDisplay } from '@/components/AmountDisplay'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { PDFPreviewModal } from '@/components/PDFPreviewModal'
+import { BulkUploadZone } from '@/components/BulkUploadZone'
 import {
   useProviderInvoices, useCostCategories,
   useUploadProviderInvoicePdf, useCreateProviderInvoice,
@@ -232,6 +233,9 @@ export function ProviderInvoices() {
           </div>
         </div>
       )}
+
+      {/* Bulk upload */}
+      <BulkUploadZone />
 
       {/* Filters */}
       <div className="mb-4 flex flex-wrap gap-3">

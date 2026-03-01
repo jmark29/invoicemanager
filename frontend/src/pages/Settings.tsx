@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { PageHeader } from '@/components/PageHeader'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import {
-  useClients, useLineItemDefs, useUpdateLineItemDef,
-  useCompanySettings, useUpdateCompanySettings,
+  useClients, useLineItemDefs, useCreateLineItemDef, useUpdateLineItemDef,
+  useCostCategories, useCompanySettings, useUpdateCompanySettings,
 } from '@/hooks/useApi'
 import type { LineItemDefinition } from '@/types/api'
 
@@ -118,8 +118,27 @@ function CompanySettingsSection() {
 
 // ── Line Item Definitions ─────────────────────────────────────
 
+interface NewItemForm {
+  position: string
+  label: string
+  source_type: string
+  category_id: string
+  fixed_amount: string
+  is_optional: boolean
+}
+
+const emptyNewItem: NewItemForm = {
+  position: '',
+  label: '',
+  source_type: 'fixed',
+  category_id: '',
+  fixed_amount: '',
+  is_optional: false,
+}
+
 function LineItemSettings() {
   const { data: clients } = useClients()
+  const { data: categories } = useCostCategories()
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined)
 
   // Auto-select first client
@@ -131,11 +150,15 @@ function LineItemSettings() {
   }, [clients, selectedClientId])
 
   const { data: definitions, isLoading } = useLineItemDefs(selectedClientId)
+  const createMutation = useCreateLineItemDef()
   const updateMutation = useUpdateLineItemDef()
 
   const [editing, setEditing] = useState<number | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [editFixedAmount, setEditFixedAmount] = useState('')
+
+  const [showCreate, setShowCreate] = useState(false)
+  const [newItem, setNewItem] = useState<NewItemForm>(emptyNewItem)
 
   const startEdit = (def: LineItemDefinition) => {
     setEditing(def.id)
@@ -154,23 +177,152 @@ function LineItemSettings() {
     setEditing(null)
   }
 
+  const handleCreate = () => {
+    if (!selectedClientId || !newItem.label || !newItem.position) return
+    createMutation.mutate(
+      {
+        client_id: selectedClientId,
+        position: parseInt(newItem.position, 10),
+        label: newItem.label,
+        source_type: newItem.source_type,
+        category_id: newItem.category_id || null,
+        fixed_amount: newItem.fixed_amount ? parseFloat(newItem.fixed_amount) : null,
+        is_optional: newItem.is_optional,
+      },
+      { onSuccess: () => { setShowCreate(false); setNewItem(emptyNewItem) } },
+    )
+  }
+
+  const nextPosition = definitions
+    ? Math.max(...definitions.map((d) => d.position), 0) + 1
+    : 1
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-700">Rechnungspositionen</h2>
-        {clients && clients.length > 1 && (
-          <select
-            value={selectedClientId ?? ''}
-            onChange={(e) => setSelectedClientId(e.target.value || undefined)}
-            title="Kunde auswählen"
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+        <div className="flex items-center gap-3">
+          {clients && clients.length > 1 && (
+            <select
+              value={selectedClientId ?? ''}
+              onChange={(e) => setSelectedClientId(e.target.value || undefined)}
+              title="Kunde auswählen"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+            >
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            onClick={() => { setNewItem({ ...emptyNewItem, position: String(nextPosition) }); setShowCreate(true) }}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
           >
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        )}
+            Neue Position
+          </button>
+        </div>
       </div>
+
+      {/* Inline creation form */}
+      {showCreate && (
+        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <h3 className="mb-3 text-xs font-semibold text-gray-700">Neue Rechnungsposition</h3>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div>
+              <label htmlFor="new-pos" className="block text-xs font-medium text-gray-600">Position</label>
+              <input
+                id="new-pos"
+                type="number"
+                value={newItem.position}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, position: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="new-label" className="block text-xs font-medium text-gray-600">Bezeichnung</label>
+              <input
+                id="new-label"
+                type="text"
+                value={newItem.label}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, label: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="new-source" className="block text-xs font-medium text-gray-600">Typ</label>
+              <select
+                id="new-source"
+                value={newItem.source_type}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, source_type: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                <option value="fixed">fixed</option>
+                <option value="category">category</option>
+                <option value="manual">manual</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="new-category" className="block text-xs font-medium text-gray-600">Kategorie</label>
+              <select
+                id="new-category"
+                value={newItem.category_id}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, category_id: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                <option value="">-- keine --</option>
+                {categories?.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="new-amount" className="block text-xs font-medium text-gray-600">Fester Betrag</label>
+              <input
+                id="new-amount"
+                type="number"
+                step="0.01"
+                value={newItem.fixed_amount}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, fixed_amount: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="flex items-end">
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-600 pb-1.5">
+                <input
+                  type="checkbox"
+                  checked={newItem.is_optional}
+                  onChange={(e) => setNewItem((prev) => ({ ...prev, is_optional: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                Optional
+              </label>
+            </div>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={createMutation.isPending || !newItem.label || !newItem.position}
+              className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {createMutation.isPending ? 'Erstelle...' : 'Erstellen'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreate(false)}
+              className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Abbrechen
+            </button>
+            {createMutation.isError && (
+              <span className="text-sm text-red-600">Fehler: {createMutation.error.message}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <p className="text-sm text-gray-500">Laden...</p>
       ) : (

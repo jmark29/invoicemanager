@@ -59,7 +59,9 @@ class BankImportResult:
 
     imported: int = 0
     skipped_duplicate: int = 0
-    auto_matched: int = 0
+    auto_matched: int = 0  # category matches
+    invoice_auto_matched: int = 0  # invoice auto-links (high confidence)
+    invoice_suggested: int = 0  # invoice suggestions (medium confidence)
     transactions: list[ParsedBankTransaction] = field(default_factory=list)
     potential_duplicates: list[PotentialDuplicate] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
@@ -250,8 +252,17 @@ def import_bank_transactions(
         db.commit()
 
     result.imported = len(imported)
+
+    # Auto-match imported transactions to existing provider invoices
+    if imported:
+        from backend.services.transaction_matching import auto_match_after_bank_import
+        imported_ids = [r.id for r in imported]
+        match_stats = auto_match_after_bank_import(imported_ids, db)
+        result.invoice_auto_matched = match_stats.auto_matched
+        result.invoice_suggested = match_stats.suggested
+
     logger.info(
-        "Bank import: %d imported, %d duplicates skipped, %d auto-matched",
+        "Bank import: %d imported, %d duplicates skipped, %d category-matched",
         result.imported, result.skipped_duplicate, result.auto_matched,
     )
     return result
