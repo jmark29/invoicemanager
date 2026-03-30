@@ -5,7 +5,7 @@ import { AmountDisplay } from '@/components/AmountDisplay'
 import { StatusBadge } from '@/components/StatusBadge'
 import { PageHeader } from '@/components/PageHeader'
 import { ErrorAlert } from '@/components/ErrorAlert'
-import { useInvoices, useClients, useDashboardOpenInvoices, useDashboardReconciliation, useProviderInvoices } from '@/hooks/useApi'
+import { useInvoices, useClients, useDashboardOpenInvoices, useDashboardReconciliation, useProviderInvoices, useCostReconciliation, useMissingMonths } from '@/hooks/useApi'
 import { formatMonthYear, formatDateGerman } from '@/utils/format'
 import type { InvoiceStatus } from '@/types/api'
 
@@ -20,6 +20,8 @@ export function Dashboard() {
   const { data: openInvoices } = useDashboardOpenInvoices()
   const { data: reconciliation } = useDashboardReconciliation(year, month)
   const { data: providerInvoices } = useProviderInvoices()
+  const { data: costRecon } = useCostReconciliation()
+  const { data: missingMonths } = useMissingMonths(clientId)
 
   // Smart default: if current month has no data, jump to most recent month with invoices or provider invoices
   const [autoJumped, setAutoJumped] = useState(false)
@@ -250,6 +252,63 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Kostenabgleich + Missing Months */}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {costRecon && (
+          <div className="rounded-lg border border-gray-200 bg-white p-5">
+            <h3 className="text-sm font-semibold text-gray-700">Kostenabgleich</h3>
+            <div className="mt-2 space-y-1 text-sm">
+              {costRecon.balanced_count > 0 && (
+                <p className="text-green-700">
+                  {costRecon.balanced_count} Kategorien ausgeglichen
+                </p>
+              )}
+              {costRecon.open_count > 0 && (
+                <p className="text-amber-700">
+                  {costRecon.open_count} Kategorien offen
+                  <span className="ml-1 text-gray-500">
+                    (<AmountDisplay amount={costRecon.total_delta} /> nicht berechnet)
+                  </span>
+                </p>
+              )}
+              {costRecon.categories.length === 0 && (
+                <p className="text-gray-400">Keine Daten</p>
+              )}
+            </div>
+            <Link
+              to="/cost-reconciliation"
+              className="mt-3 inline-block text-sm text-blue-600 hover:underline"
+            >
+              Details &rarr;
+            </Link>
+          </div>
+        )}
+
+        {missingMonths && missingMonths.total > 0 && (
+          <div className="rounded-lg border border-gray-200 bg-white p-5">
+            <h3 className="text-sm font-semibold text-gray-700">Fehlende Rechnungen</h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {missingMonths.months.slice(0, 12).map((m) => (
+                <span key={`${m.year}-${m.month}`} className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                  {m.label}
+                </span>
+              ))}
+              {missingMonths.total > 12 && (
+                <span className="text-xs text-gray-400">+{missingMonths.total - 12} weitere</span>
+              )}
+            </div>
+            {missingMonths.months[0] && (
+              <Link
+                to={`/invoices/generate?year=${missingMonths.months[0].year}&month=${missingMonths.months[0].month}`}
+                className="mt-3 inline-block rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Nächste erstellen &rarr;
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Quick links */}
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">

@@ -16,6 +16,7 @@ import type {
   InvoicePreviewRequest, InvoiceGenerateRequest, InvoiceStatusUpdate, InvoiceRegenerateRequest,
   PaymentReceiptCreate, PaymentReceiptUpdate,
   BulkUploadConfirmItem,
+  ImportConfirmRequest,
 } from '@/types/api'
 
 // ── Query keys ─────────────────────────────────────────────────
@@ -36,6 +37,9 @@ export const queryKeys = {
   dashboardMonthly: (year: number, month: number) => ['dashboardMonthly', year, month] as const,
   dashboardOpenInvoices: ['dashboardOpenInvoices'] as const,
   dashboardReconciliation: (year: number, month: number) => ['dashboardReconciliation', year, month] as const,
+  costReconciliation: ['costReconciliation'] as const,
+  costReconciliationDetail: (categoryId: string) => ['costReconciliationDetail', categoryId] as const,
+  missingMonths: (clientId?: string) => ['missingMonths', clientId] as const,
 }
 
 // ── Clients ────────────────────────────────────────────────────
@@ -442,5 +446,49 @@ export function useUpdateCompanySettings() {
   return useMutation({
     mutationFn: (data: CompanySettingsUpdate) => companySettingsApi.update(data),
     onSuccess: () => { void qc.invalidateQueries({ queryKey: ['companySettings'] }) },
+  })
+}
+
+// ── Invoice Import ───────────────────────────────────────────────
+
+export function useImportParse() {
+  return useMutation({
+    mutationFn: (files: File[]) => invoicesApi.importParse(files),
+  })
+}
+
+export function useImportConfirm() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: ImportConfirmRequest) => invoicesApi.importConfirm(data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['invoices'] })
+      void qc.invalidateQueries({ queryKey: ['costReconciliation'] })
+      void qc.invalidateQueries({ queryKey: ['missingMonths'] })
+    },
+  })
+}
+
+// ── Cost Reconciliation ──────────────────────────────────────────
+
+export function useCostReconciliation() {
+  return useQuery({
+    queryKey: queryKeys.costReconciliation,
+    queryFn: () => dashboardApi.costReconciliation(),
+  })
+}
+
+export function useCostReconciliationDetail(categoryId: string) {
+  return useQuery({
+    queryKey: queryKeys.costReconciliationDetail(categoryId),
+    queryFn: () => dashboardApi.costReconciliationDetail(categoryId),
+    enabled: !!categoryId,
+  })
+}
+
+export function useMissingMonths(clientId?: string) {
+  return useQuery({
+    queryKey: queryKeys.missingMonths(clientId),
+    queryFn: () => dashboardApi.missingMonths(clientId),
   })
 }

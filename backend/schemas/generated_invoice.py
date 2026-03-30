@@ -18,6 +18,7 @@ class GeneratedInvoiceItemResponse(BaseModel):
     distribution_months_json: str | None = None
     upwork_tx_ids_json: str | None = None
     notes: str | None = None
+    line_item_config_id: int | None = None
 
     model_config = {"from_attributes": True}
 
@@ -40,6 +41,10 @@ class GeneratedInvoiceResponse(BaseModel):
     sent_date: date | None = None
     created_at: datetime
     notes: str | None = None
+    source: str = "generated"
+    original_file_path: str | None = None
+    period_start: date | None = None
+    period_end: date | None = None
     items: list[GeneratedInvoiceItemResponse] = []
 
     model_config = {"from_attributes": True}
@@ -57,6 +62,7 @@ class GeneratedInvoiceListResponse(BaseModel):
     gross_total: float
     status: str
     created_at: datetime
+    source: str = "generated"
 
     model_config = {"from_attributes": True}
 
@@ -75,6 +81,14 @@ class InvoicePreviewRequest(BaseModel):
     month: int
 
 
+class ContributingInvoiceResponse(BaseModel):
+    provider_invoice_id: int
+    invoice_number: str
+    amount_eur: float
+    assigned_month: str | None = None
+    is_from_different_month: bool = False
+
+
 class ResolvedLineItemResponse(BaseModel):
     position: int
     label: str
@@ -86,6 +100,7 @@ class ResolvedLineItemResponse(BaseModel):
     distribution_months: list[str] | None = None
     upwork_tx_ids: list[str] | None = None
     warnings: list[str] = []
+    contributing_invoices: list[ContributingInvoiceResponse] = []
 
 
 class InvoicePreviewResponse(BaseModel):
@@ -107,6 +122,7 @@ class InvoiceGenerateRequest(BaseModel):
     invoice_date: date
     overrides: dict[int, float] | None = None
     notes: str | None = None
+    excluded_provider_invoice_ids: list[int] | None = None
 
 
 class InvoiceRegenerateRequest(BaseModel):

@@ -15,6 +15,9 @@ import type {
   MatchActionResponse,
   WorkingDaysResponse,
   BulkUploadResponse, BulkUploadConfirmItem, BulkUploadConfirmResponse,
+  ImportParseResponse, ImportConfirmRequest, ImportConfirmResponse,
+  CostReconciliationSummary, CategoryReconciliationDetail,
+  MissingMonthsResponse,
 } from '@/types/api'
 
 // ── Base helpers ───────────────────────────────────────────────
@@ -201,6 +204,18 @@ export const invoicesApi = {
   regenerate: (id: number, data: InvoiceRegenerateRequest) =>
     apiFetch<GeneratedInvoice>(`/api/invoices/${id}/regenerate`, { method: 'POST', body: JSON.stringify(data) }),
   downloadUrl: (id: number) => `/api/invoices/${id}/download`,
+  importParse: async (files: File[]): Promise<ImportParseResponse> => {
+    const formData = new FormData()
+    for (const file of files) formData.append('files', file)
+    const res = await fetch('/api/invoices/import/parse', { method: 'POST', body: formData })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as { detail?: string }
+      throw new Error(body.detail ?? `Import error ${res.status}`)
+    }
+    return res.json() as Promise<ImportParseResponse>
+  },
+  importConfirm: (data: ImportConfirmRequest) =>
+    apiFetch<ImportConfirmResponse>('/api/invoices/import/confirm', { method: 'POST', body: JSON.stringify(data) }),
 }
 
 // ── Payments ───────────────────────────────────────────────────
@@ -234,6 +249,12 @@ export const dashboardApi = {
     apiFetch<OpenInvoicesData>('/api/dashboard/open-invoices'),
   reconciliation: (year: number, month: number) =>
     apiFetch<ReconciliationData>(`/api/dashboard/reconciliation/${year}/${month}`),
+  costReconciliation: () =>
+    apiFetch<CostReconciliationSummary>('/api/dashboard/cost-reconciliation'),
+  costReconciliationDetail: (categoryId: string) =>
+    apiFetch<CategoryReconciliationDetail>(`/api/dashboard/cost-reconciliation/${categoryId}`),
+  missingMonths: (clientId?: string) =>
+    apiFetch<MissingMonthsResponse>(`/api/dashboard/missing-months${clientId ? `?client_id=${clientId}` : ''}`),
 }
 
 // ── Company Settings ──────────────────────────────────────────

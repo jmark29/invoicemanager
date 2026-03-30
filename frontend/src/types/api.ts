@@ -325,6 +325,10 @@ export interface GeneratedInvoice {
   sent_date: string | null
   created_at: string
   notes: string | null
+  source: string
+  original_file_path: string | null
+  period_start: string | null
+  period_end: string | null
   items: GeneratedInvoiceItem[]
 }
 
@@ -340,6 +344,7 @@ export interface GeneratedInvoiceListItem {
   gross_total: number
   status: InvoiceStatus
   created_at: string
+  source: string
 }
 
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue'
@@ -350,6 +355,14 @@ export interface InvoicePreviewRequest {
   client_id: string
   year: number
   month: number
+}
+
+export interface ContributingInvoice {
+  provider_invoice_id: number
+  invoice_number: string
+  amount_eur: number
+  assigned_month: string | null
+  is_from_different_month: boolean
 }
 
 export interface ResolvedLineItem {
@@ -363,6 +376,7 @@ export interface ResolvedLineItem {
   distribution_months: string[] | null
   upwork_tx_ids: string[] | null
   warnings: string[]
+  contributing_invoices: ContributingInvoice[]
 }
 
 export interface InvoicePreviewResponse {
@@ -384,6 +398,7 @@ export interface InvoiceGenerateRequest {
   invoice_date: string
   overrides?: Record<number, number> | null
   notes?: string | null
+  excluded_provider_invoice_ids?: number[] | null
 }
 
 export interface InvoiceStatusUpdate {
@@ -632,4 +647,126 @@ export interface WorkingDaysResponse {
   month: number
   working_days: number
   holidays: string[]
+}
+
+// ── Invoice Import ────────────────────────────────────────────────
+
+export interface ImportParsedLineItem {
+  position: number
+  description: string
+  amount: number
+  matched_config_id: number | null
+  matched_source_type: string | null
+  matched_category_id: string | null
+  match_confidence: string
+  linked_provider_invoice_ids: number[]
+  linked_amounts: number[]
+}
+
+export interface ImportParsedInvoice {
+  filename: string
+  stored_path: string
+  invoice_number: string | null
+  invoice_date: string | null
+  period_start: string | null
+  period_end: string | null
+  client_name: string | null
+  line_items: ImportParsedLineItem[]
+  net_total: number | null
+  tax_rate: number | null
+  tax_amount: number | null
+  gross_total: number | null
+  confidence: string
+}
+
+export interface ImportParseResponse {
+  invoices: ImportParsedInvoice[]
+  total: number
+  parsed: number
+}
+
+export interface ImportConfirmLineItem {
+  position: number
+  description: string
+  amount: number
+  line_item_config_id?: number | null
+  source_type?: string | null
+  category_id?: string | null
+  provider_invoice_ids: number[]
+  provider_invoice_amounts: number[]
+}
+
+export interface ImportConfirmInvoice {
+  stored_path: string
+  invoice_number: string
+  invoice_date: string
+  period_start?: string | null
+  period_end?: string | null
+  client_id: string
+  status: string
+  line_items: ImportConfirmLineItem[]
+  net_total: number
+  tax_rate: number
+  vat_amount: number
+  gross_total: number
+}
+
+export interface ImportConfirmRequest {
+  invoices: ImportConfirmInvoice[]
+}
+
+export interface ImportConfirmResponse {
+  created: number
+  linked_sources: number
+  errors: string[]
+}
+
+// ── Cost Reconciliation ───────────────────────────────────────────
+
+export interface CategoryBalance {
+  category_id: string
+  category_name: string
+  total_provider_costs: number
+  total_invoiced: number
+  delta: number
+  status: string
+}
+
+export interface ProviderInvoiceStatus {
+  id: number
+  invoice_number: string
+  invoice_date: string | null
+  amount_eur: number
+  assigned_month: string | null
+  linked_invoice_number: string | null
+  linked_line_item_id: number | null
+  amount_invoiced: number | null
+  status: string
+}
+
+export interface CategoryReconciliationDetail {
+  category_id: string
+  category_name: string
+  balance: CategoryBalance
+  provider_invoices: ProviderInvoiceStatus[]
+}
+
+export interface CostReconciliationSummary {
+  categories: CategoryBalance[]
+  total_provider_costs: number
+  total_invoiced: number
+  total_delta: number
+  balanced_count: number
+  open_count: number
+}
+
+export interface MissingMonth {
+  year: number
+  month: number
+  label: string
+}
+
+export interface MissingMonthsResponse {
+  months: MissingMonth[]
+  total: number
 }

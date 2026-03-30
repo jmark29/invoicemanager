@@ -1,7 +1,9 @@
-"""Dashboard aggregation and reconciliation endpoints."""
+"""Dashboard aggregation, reconciliation, and cost reconciliation endpoints."""
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import and_, extract, or_
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import and_, extract, func, or_
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -9,6 +11,14 @@ from backend.models.bank_transaction import BankTransaction
 from backend.models.generated_invoice import GeneratedInvoice, GeneratedInvoiceItem
 from backend.models.payment_receipt import PaymentReceipt
 from backend.models.provider_invoice import ProviderInvoice
+from backend.schemas.cost_reconciliation import (
+    CategoryBalanceResponse,
+    CategoryReconciliationDetailResponse,
+    CostReconciliationSummaryResponse,
+    MissingMonthResponse,
+    MissingMonthsResponse,
+    ProviderInvoiceStatusResponse,
+)
 from backend.schemas.dashboard import (
     CompletedMatchResponse,
     InvoicePaymentStatusResponse,
@@ -231,3 +241,134 @@ def get_reconciliation(year: int, month: int, db: Session = Depends(get_db)):
             else None
         ),
     )
+
+
+# ── Cost Reconciliation (Running Balance) ────────────────────────────
+
+
+@router.get(
+    "/cost-reconciliation",
+    response_model=CostReconciliationSummaryResponse,
+)
+def get_cost_reconciliation(db: Session = Depends(get_db)):
+    """Get running balance summary across all active cost categories."""
+    from backend.services.cost_reconciliation import get_cost_reconciliation_summary
+
+    summary = get_cost_reconciliation_summary(db)
+    return CostReconciliationSummaryResponse(
+        categories=[
+            CategoryBalanceResponse(
+                category_id=b.category_id,
+                category_name=b.category_name,
+                total_provider_costs=b.total_provider_costs,
+                total_invoiced=b.total_invoiced,
+                delta=b.delta,
+                status=b.status,
+            )
+            for b in summary.categories
+        ],
+        total_provider_costs=summary.total_provider_costs,
+        total_invoiced=summary.total_invoiced,
+        total_delta=summary.total_delta,
+        balanced_count=summary.balanced_count,
+        open_count=summary.open_count,
+    )
+
+
+@router.get(
+    "/cost-reconciliation/{category_id}",
+    response_model=CategoryReconciliationDetailResponse,
+)
+def get_category_reconciliation(category_id: str, db: Session = Depends(get_db)):
+    """Get detailed provider invoice linkage status for a single category."""
+    from backend.services.cost_reconciliation import get_category_reconciliation_detail
+
+    try:
+        detail = get_category_reconciliation_detail(category_id, db)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+    return CategoryReconciliationDetailResponse(
+        category_id=detail.category_id,
+        category_name=detail.category_name,
+        balance=CategoryBalanceResponse(
+            category_id=detail.balance.category_id,
+            category_name=detail.balance.category_name,
+            total_provider_costs=detail.balance.total_provider_costs,
+            total_invoiced=detail.balance.total_invoiced,
+            delta=detail.balance.delta,
+            status=detail.balance.status,
+        ),
+        provider_invoices=[
+            ProviderInvoiceStatusResponse(
+                id=pi.id,
+                invoice_number=pi.invoice_number,
+                invoice_date=pi.invoice_date,
+                amount_eur=pi.amount_eur,
+                assigned_month=pi.assigned_month,
+                linked_invoice_number=pi.linked_invoice_number,
+                linked_line_item_id=pi.linked_line_item_id,
+                amount_invoiced=pi.amount_invoiced,
+                status=pi.status,
+            )
+            for pi in detail.provider_invoices
+        ],
+    )
+
+
+# ── Missing Months ───────────────────────────────────────────────────
+
+_MONTH_NAMES = [
+    "", "Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
+    "Jul", "Aug", "Sep", "Okt", "Nov", "Dez",
+]
+
+
+@router.get("/missing-months", response_model=MissingMonthsResponse)
+def get_missing_months(
+    client_id: str | None = None,
+    db: Session = Depends(get_db),
+):
+    """Determine which months are missing invoices.
+
+    Scans from the earliest provider invoice month to the current month,
+    checks which months have a GeneratedInvoice record.
+    """
+    # Find earliest provider invoice date
+    earliest = db.query(func.min(ProviderInvoice.invoice_date)).scalar()
+    if not earliest:
+        return MissingMonthsResponse(months=[], total=0)
+
+    start_year, start_month = earliest.year, earliest.month
+
+    # Find current date
+    today = date.today()
+    end_year, end_month = today.year, today.month
+
+    # Get all existing invoice months
+    query = db.query(
+        GeneratedInvoice.period_year,
+        GeneratedInvoice.period_month,
+    )
+    if client_id:
+        query = query.filter(GeneratedInvoice.client_id == client_id)
+    existing = {(row[0], row[1]) for row in query.all()}
+
+    # Build missing months list
+    missing: list[MissingMonthResponse] = []
+    y, m = start_year, start_month
+    while (y, m) <= (end_year, end_month):
+        if (y, m) not in existing:
+            missing.append(
+                MissingMonthResponse(
+                    year=y,
+                    month=m,
+                    label=f"{_MONTH_NAMES[m]} {y}",
+                )
+            )
+        m += 1
+        if m > 12:
+            m = 1
+            y += 1
+
+    return MissingMonthsResponse(months=missing, total=len(missing))

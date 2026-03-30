@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import {
-  LayoutDashboard, FileText, FilePlus, Scale, Users,
+  LayoutDashboard, FileText, FilePlus, Scale, BarChart3, Users,
   LayoutList, FileDown, Landmark, Monitor, Euro, Settings,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -11,6 +11,7 @@ const NAV_ITEMS: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/invoices', label: 'Rechnungen', icon: FileText },
   { to: '/invoices/generate', label: 'Rechnung erstellen', icon: FilePlus },
   { to: '/reconciliation', label: 'Abstimmung', icon: Scale },
+  { to: '/cost-reconciliation', label: 'Kostenabgleich', icon: BarChart3 },
   { to: '/clients', label: 'Kunden', icon: Users },
   { to: '/categories', label: 'Kategorien', icon: LayoutList },
   { to: '/provider-invoices', label: 'Lieferantenrechnungen', icon: FileDown },

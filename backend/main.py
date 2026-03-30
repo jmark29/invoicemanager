@@ -151,6 +151,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
         settings.GENERATED_DIR,
         settings.CATEGORIES_DIR,
         settings.IMPORTS_DIR,
+        settings.IMPORTS_DIR / "invoices",
     ]:
         directory.mkdir(parents=True, exist_ok=True)
 

@@ -199,18 +199,15 @@ class TestPreviewInvoice:
         assert item3.source_type == "direct"
 
     def test_preview_distributed_amount(self, db_session, seed_jun2025_data):
-        """Kaletsch Q2: 8853.00 distributed across Apr(20)+May(20)+Jun(19)=59 days.
-        Jun = 8853.00 * 19 / 59 = 2851.20 (with rounding to the remainder)."""
+        """Running-balance: Kaletsch Q2 (8853.00) is un-invoiced, so the full
+        distributed amount across all 3 months is included."""
         preview = preview_invoice("drs", 2025, 6, db_session)
         item4 = preview.items[3]
         assert item4.position == 4
         assert item4.source_type == "distributed"
-        # Jun is the last month, so gets the remainder
-        # Apr = round(8853.00 * 20/59) = 3001.02
-        # May = round(8853.00 * 20/59) = 3001.02
-        # Jun = 8853.00 - 3001.02 - 3001.02 = 2850.96
-        # Let's just verify it's a positive amount in reasonable range
-        assert 2800.0 < item4.amount < 2900.0
+        # Full distributed amount = 8853.00 (bank payment, all months un-invoiced)
+        assert item4.amount == pytest.approx(8853.00, abs=0.01)
+        assert len(item4.contributing_invoices) == 1
 
     def test_preview_upwork_amount(self, db_session, seed_jun2025_data):
         preview = preview_invoice("drs", 2025, 6, db_session)
@@ -492,10 +489,15 @@ class TestGenerateInvoice:
             )
             .first()
         )
-        assert dist_item.distribution_source_id is not None
-        assert dist_item.distribution_months_json is not None
-        months = json.loads(dist_item.distribution_months_json)
-        assert "2025-06" in months
+        # Running-balance resolver uses InvoiceLineItemSource for traceability
+        from backend.models.invoice_line_item_source import InvoiceLineItemSource
+        sources = (
+            db_session.query(InvoiceLineItemSource)
+            .filter(InvoiceLineItemSource.line_item_id == dist_item.id)
+            .all()
+        )
+        assert len(sources) > 0
+        assert sources[0].provider_invoice_id is not None
 
 
 # ── API Endpoint Tests ───────────────────────────────────────────

@@ -20,7 +20,12 @@ from backend.config import settings
 from backend.models.client import Client
 from backend.models.company_settings import CompanySettings
 from backend.models.generated_invoice import GeneratedInvoice, GeneratedInvoiceItem
-from backend.services.cost_calculation import InvoicePreview, resolve_line_items
+from backend.models.invoice_line_item_source import InvoiceLineItemSource
+from backend.services.cost_calculation import (
+    InvoicePreview,
+    resolve_line_items,
+    resolve_line_items_running_balance,
+)
 from backend.services.formatting import (
     format_date_german,
     format_period,
@@ -34,13 +39,20 @@ def preview_invoice(
     year: int,
     month: int,
     db: Session,
+    excluded_provider_invoice_ids: list[int] | None = None,
 ) -> InvoicePreview:
     """Dry-run: resolve all line item amounts for a client/month.
+
+    Uses running-balance resolution — un-invoiced provider costs across all
+    months, not just the target month.
 
     Returns an InvoicePreview with items, totals, and warnings.
     No data is written.
     """
-    return resolve_line_items(client_id, year, month, db)
+    return resolve_line_items_running_balance(
+        client_id, year, month, db,
+        excluded_provider_invoice_ids=excluded_provider_invoice_ids,
+    )
 
 
 def generate_invoice(
@@ -52,6 +64,7 @@ def generate_invoice(
     invoice_date: date,
     overrides: dict[int, float] | None = None,
     notes: str | None = None,
+    excluded_provider_invoice_ids: list[int] | None = None,
     db: Session,
 ) -> GeneratedInvoice:
     """Full generation workflow: resolve, render, store.
@@ -87,8 +100,11 @@ def generate_invoice(
             f"Invoice number '{invoice_number}' already exists (id={existing.id})"
         )
 
-    # 2. Resolve line items
-    preview = resolve_line_items(client_id, year, month, db)
+    # 2. Resolve line items (running-balance approach)
+    preview = resolve_line_items_running_balance(
+        client_id, year, month, db,
+        excluded_provider_invoice_ids=excluded_provider_invoice_ids,
+    )
 
     # 3. Apply overrides
     if overrides:
@@ -184,6 +200,16 @@ def generate_invoice(
             ),
         )
         db.add(inv_item)
+        db.flush()  # get inv_item.id for source links
+
+        # 9. Create InvoiceLineItemSource records for contributing provider invoices
+        for contrib in item.contributing_invoices:
+            source = InvoiceLineItemSource(
+                line_item_id=inv_item.id,
+                provider_invoice_id=contrib.provider_invoice_id,
+                amount_contributed=contrib.amount_eur,
+            )
+            db.add(source)
 
     db.commit()
     db.refresh(invoice)

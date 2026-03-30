@@ -17,6 +17,10 @@
 | 2.0 | 2026-02-28 | Revision Sprint 1: bug fixes, document management, multi-client foundation |
 | 2.1 | 2026-02-28 | Revision Sprint 1 completed — all 13 tasks done (337 backend + 32 frontend tests) |
 | 3.0 | 2026-02-28 | Revision Sprint 2: bulk upload, transaction matching, FX tracking, reconciliation |
+| 3.1 | 2026-03-01 | Revision Sprint 2 completed — all 6 tasks implemented |
+| 4.0 | 2026-03-01 | Revision Sprint 3 completed — 5 bug fixes from Sprint 2 review + Lucide icon overhaul |
+| 4.1 | 2026-03-30 | Documentation catch-up: marked Sprint 2/3 as Done, added Sprint 3 section |
+| 5.0 | 2026-03-30 | Revision Sprint 4: import existing invoices, running-balance reconciliation, invoice generation rewrite |
 
 ---
 
@@ -568,12 +572,12 @@ Backfill: existing linked records get payment_status='matched', match_status='au
 
 | # | Task | Priority | Status |
 |---|------|----------|--------|
-| 1 | Fix document download (auto-link PDFs on startup) | Critical | Pending |
-| 2 | Bulk upload with PDF extraction + review step + MCP tools | Critical | Pending |
-| 3 | Bidirectional transaction matching (auto-match, confidence scoring, review UI) | Critical | Pending |
-| 4 | Currency/FX tracking (amount_eur, fx_rate, bank_fee, fee UI) | High | Pending |
-| 5 | Improved reconciliation dashboard (3-section layout, matching actions) | Medium | Pending |
-| 6 | UX polish carry-overs (tooltip, smart defaults, line item create) | Low | Pending |
+| 1 | Fix document download (auto-link PDFs on startup) | Critical | Done |
+| 2 | Bulk upload with PDF extraction + review step + MCP tools | Critical | Done |
+| 3 | Bidirectional transaction matching (auto-match, confidence scoring, review UI) | Critical | Done |
+| 4 | Currency/FX tracking (amount_eur, fx_rate, bank_fee, fee UI) | High | Done |
+| 5 | Improved reconciliation dashboard (3-section layout, matching actions) | Medium | Done |
+| 6 | UX polish carry-overs (tooltip, smart defaults, line item create) | Low | Done |
 
 ### New Files
 
@@ -604,3 +608,135 @@ Backfill: existing linked records get payment_status='matched', match_status='au
 | `get_unmatched_transactions` | Query unmatched bank transactions |
 | `get_unmatched_invoices` | Query invoices without payment |
 | `match_transaction_to_invoice` | Link a transaction to an invoice |
+
+### Tests
+
+- `tests/test_bulk_upload.py` — 455 lines, bulk upload + PDF extraction tests
+- `tests/test_transaction_matching.py` — 285 lines, matching logic + confidence scoring tests
+
+### Notes
+
+- Sprint 2 review (`docs/InvoiceManager-Revision-Sprint-3.md`) identified 5 bugs — all resolved in Sprint 3
+- `pdfplumber` added as dependency for PDF text extraction
+- Single Alembic migration: `sprint2_matching_fx_tracking`
+
+---
+
+## Revision Sprint 3 — Bug Fixes, Lucide Icon Overhaul & Invoice Generation E2E
+
+> **Date:** 2026-03-01
+> **Spec:** `docs/InvoiceManager-Revision-Sprint-3.md` (Sprint 2 review that identified the bugs)
+
+### Context
+
+Sprint 2 review identified 5 bugs across PDF preview, currency display, reconciliation queries, smart month defaults, and line item client scoping. This sprint fixes all 5 and adds a Lucide icon overhaul replacing sidebar emoji with SVG icons.
+
+### Bug Fixes
+
+| # | Bug | Fix |
+|---|-----|-----|
+| 1 | PDF preview blank (intermittent 503) | Rewrote with blob URL approach (fetch + createObjectURL) |
+| 2 | Currency symbol € shown for USD invoices on category detail | Pass currency prop to AmountDisplay on CostCategoryDetail |
+| 3 | Reconciliation missing non-EUR invoices | Broadened queries with OR(assigned_month, invoice_date) + SQL date filters |
+| 4 | Dashboard/Abstimmung defaults to current month (no data) | Smart month default — auto-jump to most recent month with data |
+| 5 | Line item client scoping missing in Settings | Always show client dropdown for line item scoping |
+
+### Icon Overhaul
+
+- Installed `lucide-react` dependency
+- Replaced all sidebar emoji with SVG icons in `Layout.tsx`
+- `ProviderInvoices.tsx`: merged PDF + Aktionen into single icon-button column
+- `InvoiceList.tsx`: Eye icon for PDF preview
+- `Settings.tsx`: Pencil icon for line item edit
+
+### Other Fixes
+
+- `InvoiceGenerate.tsx`: Fixed React anti-pattern — moved client auto-select to useEffect
+
+### Files Modified (12)
+
+`backend/routers/dashboard.py`, `backend/services/reconciliation.py`, `frontend/package.json`, `frontend/src/components/Layout.tsx`, `frontend/src/components/PDFPreviewModal.tsx`, `frontend/src/pages/CostCategoryDetail.tsx`, `frontend/src/pages/InvoiceGenerate.tsx`, `frontend/src/pages/InvoiceList.tsx`, `frontend/src/pages/ProviderInvoices.tsx`, `frontend/src/pages/Reconciliation.tsx`, `frontend/src/pages/Settings.tsx`
+
+---
+
+## Revision Sprint 4 — Import Existing Invoices + Running-Balance Reconciliation
+
+> **Date:** 2026-03-30
+> **Spec:** `docs/InvoiceManager-Revision-Sprint-4.md`
+
+### Context
+
+The system had no record of invoices already issued. Jan created invoices for Jan-Jun 2025 as .docx files. Without importing these, the system couldn't track receivables, reconcile payments, or know which months still need invoicing. This sprint adds: (1) importing existing .docx invoices, (2) a running-balance cost reconciliation view, (3) rewriting invoice generation to use un-invoiced costs instead of per-month lookups, and (4) dashboard integration.
+
+### Key Design Decisions
+
+- **Kept existing table names** (`generated_invoices` / `generated_invoice_items`) — extended with new columns instead of renaming
+- **Added `invoice_line_item_sources`** as a new many-to-many traceability table alongside existing single-FK fields
+- **Replaced per-month resolution with running-balance** — `resolve_line_items_running_balance()` queries un-invoiced provider costs across all months; existing endpoints modified in-place (no v2)
+- **DOCX parsing via `python-docx`** (reliable for known template) + PDF best-effort via existing `pdfplumber`
+- **Separate Kostenabgleich page** from existing Abstimmung (different concerns: pass-through vs. payment matching)
+
+### DB Migration (single migration for entire sprint)
+
+```
+alembic revision: sprint4_import_reconciliation (a3b4c5d6e7f8)
+```
+
+Changes:
+1. `generated_invoices`: + `source`, `original_file_path`, `period_start`, `period_end`
+2. `generated_invoice_items`: + `line_item_config_id` (FK → line_item_definitions)
+3. New table `invoice_line_item_sources` (line_item_id, provider_invoice_id, amount_contributed)
+4. Backfill: existing items with provider_invoice_id/distribution_source_id → source records
+
+### New Files (9)
+
+| File | Purpose |
+|------|---------|
+| `backend/models/invoice_line_item_source.py` | InvoiceLineItemSource ORM model |
+| `backend/services/docx_extraction.py` | DOCX parsing for client invoice import |
+| `backend/services/import_matching.py` | Line item matching + provider invoice linking |
+| `backend/services/cost_reconciliation.py` | Running balance service (summary, detail, uninvoiced) |
+| `backend/schemas/invoice_import.py` | Import parse/confirm request/response schemas |
+| `backend/schemas/cost_reconciliation.py` | Reconciliation + missing months response schemas |
+| `alembic/versions/20260330_sprint4_import_reconciliation.py` | Migration |
+| `frontend/src/pages/InvoiceImport.tsx` | 3-step import UI (upload → review → confirm) |
+| `frontend/src/pages/CostReconciliation.tsx` | Kostenabgleich page with expandable category rows |
+
+### Modified Files (17)
+
+| File | Changes |
+|------|---------|
+| `pyproject.toml` | Added `python-docx>=1.1` |
+| `backend/models/generated_invoice.py` | Added source, original_file_path, period_start/end, sources relationship |
+| `backend/models/__init__.py` | Registered InvoiceLineItemSource |
+| `backend/schemas/generated_invoice.py` | Added source/period fields, ContributingInvoiceResponse, excluded_provider_invoice_ids |
+| `backend/services/cost_calculation.py` | Added `resolve_line_items_running_balance()`, ContributingInvoice, helper resolvers |
+| `backend/services/invoice_engine.py` | Uses running-balance resolver, creates InvoiceLineItemSource on generate |
+| `backend/routers/invoices.py` | Added import/parse + import/confirm endpoints, contributing invoices in preview |
+| `backend/routers/dashboard.py` | Added cost-reconciliation, cost-reconciliation/{id}, missing-months endpoints |
+| `backend/main.py` | Added imports/invoices directory on startup |
+| `frontend/src/types/api.ts` | Added import + reconciliation + contributing invoice types |
+| `frontend/src/api/client.ts` | Added importParse, importConfirm, costReconciliation, missingMonths APIs |
+| `frontend/src/hooks/useApi.ts` | Added import, reconciliation, missing months hooks |
+| `frontend/src/router.tsx` | Added /invoices/import and /cost-reconciliation routes |
+| `frontend/src/pages/InvoiceList.tsx` | Added Importieren button, Importiert badge |
+| `frontend/src/pages/InvoiceGenerate.tsx` | Added Quellen column, URL param support (?year=&month=) |
+| `frontend/src/pages/Dashboard.tsx` | Added Kostenabgleich summary card, Missing months card |
+| `frontend/src/components/Layout.tsx` | Added Kostenabgleich nav item with BarChart3 icon |
+
+### New API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/api/invoices/import/parse` | Upload .docx/.pdf, extract invoice data |
+| POST | `/api/invoices/import/confirm` | Save reviewed imports to database |
+| GET | `/api/dashboard/cost-reconciliation` | Running balance summary |
+| GET | `/api/dashboard/cost-reconciliation/{category_id}` | Category detail |
+| GET | `/api/dashboard/missing-months` | Months without invoices |
+
+### Tests
+
+- 368 backend tests pass (0 regressions)
+- 2 tests updated: distributed amount test (running-balance returns full un-invoiced amount), distribution traceability test (checks InvoiceLineItemSource instead of legacy FK)
+- TypeScript: 0 errors
+- Vite build: 409 KB JS bundle

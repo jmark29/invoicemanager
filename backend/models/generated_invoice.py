@@ -8,6 +8,7 @@ from backend.models.base import Base
 
 if TYPE_CHECKING:
     from backend.models.client import Client
+    from backend.models.invoice_line_item_source import InvoiceLineItemSource
     from backend.models.payment_receipt import PaymentReceipt
     from backend.models.upwork_transaction import UpworkTransaction
 
@@ -32,6 +33,11 @@ class GeneratedInvoice(Base):
     sent_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Sprint 4: import support
+    source: Mapped[str] = mapped_column(String, default="generated")  # generated, imported
+    original_file_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    period_start: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    period_end: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     client: Mapped["Client"] = relationship(back_populates="generated_invoices")
     items: Mapped[list["GeneratedInvoiceItem"]] = relationship(
@@ -66,5 +72,12 @@ class GeneratedInvoiceItem(Base):
     distribution_months_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     upwork_tx_ids_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Sprint 4: link to line item definition config
+    line_item_config_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("line_item_definitions.id"), nullable=True
+    )
 
     invoice: Mapped["GeneratedInvoice"] = relationship(back_populates="items")
+    sources: Mapped[list["InvoiceLineItemSource"]] = relationship(
+        back_populates="line_item", cascade="all, delete-orphan"
+    )

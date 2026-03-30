@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MonthSelector } from '@/components/MonthSelector'
 import { AmountDisplay } from '@/components/AmountDisplay'
 import { PageHeader } from '@/components/PageHeader'
@@ -9,9 +9,12 @@ import type { InvoicePreviewResponse } from '@/types/api'
 
 export function InvoiceGenerate() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const now = new Date()
-  const [year, setYear] = useState(now.getFullYear())
-  const [month, setMonth] = useState(now.getMonth() + 1)
+  const paramYear = searchParams.get('year')
+  const paramMonth = searchParams.get('month')
+  const [year, setYear] = useState(paramYear ? parseInt(paramYear) : now.getFullYear())
+  const [month, setMonth] = useState(paramMonth ? parseInt(paramMonth) : now.getMonth() + 1)
   const [clientId, setClientId] = useState('')
   const [preview, setPreview] = useState<InvoicePreviewResponse | null>(null)
   const [overrides, setOverrides] = useState<Record<number, number>>({})
@@ -151,8 +154,9 @@ export function InvoiceGenerate() {
                 <th className="w-12 px-3 py-2 font-medium text-gray-600">Pos</th>
                 <th className="px-3 py-2 font-medium text-gray-600">Bezeichnung</th>
                 <th className="w-20 px-3 py-2 font-medium text-gray-600">Typ</th>
-                <th className="w-40 px-3 py-2 text-right font-medium text-gray-600">Betrag (auto)</th>
-                <th className="w-40 px-3 py-2 text-right font-medium text-gray-600">Betrag (überschreiben)</th>
+                <th className="px-3 py-2 font-medium text-gray-600">Quellen</th>
+                <th className="w-36 px-3 py-2 text-right font-medium text-gray-600">Betrag (auto)</th>
+                <th className="w-36 px-3 py-2 text-right font-medium text-gray-600">Überschreiben</th>
               </tr>
             </thead>
             <tbody>
@@ -168,6 +172,23 @@ export function InvoiceGenerate() {
                     )}
                   </td>
                   <td className="px-3 py-2 text-xs text-gray-500">{item.source_type}</td>
+                  <td className="px-3 py-2 text-xs text-gray-500">
+                    {item.source_type === 'fixed' && 'Konfiguriert'}
+                    {item.source_type === 'manual' && 'Manuell'}
+                    {item.contributing_invoices?.length > 0 && (
+                      <div className="space-y-0.5">
+                        {item.contributing_invoices.map((c) => (
+                          <div key={c.provider_invoice_id} className="flex items-center gap-1">
+                            <span>{c.invoice_number}</span>
+                            <span className="text-gray-400">({formatEur(c.amount_eur)})</span>
+                            {c.is_from_different_month && (
+                              <span className="text-yellow-600" title="Aus anderem Monat">⚠</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-right text-gray-600">
                     {formatEur(item.amount)}
                   </td>

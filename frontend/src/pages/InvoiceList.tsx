@@ -42,12 +42,20 @@ export function InvoiceList() {
       <PageHeader
         title="Rechnungen"
         action={
-          <Link
-            to="/invoices/generate"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Neue Rechnung
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              to="/invoices/import"
+              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+            >
+              Importieren
+            </Link>
+            <Link
+              to="/invoices/generate"
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Neue Rechnung
+            </Link>
+          </div>
         }
       />
 
@@ -134,7 +142,14 @@ export function InvoiceList() {
                     <AmountDisplay amount={inv.gross_total} />
                   </td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={inv.status} />
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={inv.status} />
+                      {inv.source === 'imported' && (
+                        <span className="inline-flex items-center rounded bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700">
+                          Importiert
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
